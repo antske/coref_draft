@@ -385,19 +385,25 @@ def get_starting_count(nafobj):
     return coref_counter
 
 
-def get_terms_from_offsets(nafobj, offset_span):
+def get_terms_from_offsets(nafobj, offset_span, head_offset = -1):
 
     wids = []
+    head_wid = ''
     for token in nafobj.get_tokens():
         if int(token.get_offset()) in offset_span:
             wids.append(token.get_id())
+            if int(token.get_offset()) == head_offset:
+                head_wid = token.get_id()
 
     tids = []
+    head_tid = ''
     for term in nafobj.get_terms():
         if term.get_span().get_span_ids()[0] in wids:
             tids.append(term.get_id())
+        if head_wid in term.get_span().get_span_ids():
+            head_tid = term.get_id()
 
-    return tids
+    return tids, head_tid
 
 def get_span_in_offsets(nafobj, span):
 
@@ -406,6 +412,25 @@ def get_span_in_offsets(nafobj, span):
         toffset = get_offset(nafobj, tid)
         offset_span.append(toffset)
     return offset_span
+
+def create_span(term_id_span, head_id):
+    '''
+    Creates naf span object where head id is set
+    :param term_id_span: list of term ids
+    :param head_id: identifier for the head id
+    :return: naf span object
+    '''
+    mySpan = Cspan()
+    for term in term_id_span:
+        if term == head_id:
+            myTarget = Ctarget()
+            myTarget.set_id(term)
+            myTarget.set_as_head()
+            mySpan.add_target(myTarget)
+        else:
+            mySpan.add_target_id(term)
+    return mySpan
+
 
 def add_coreference_to_naf(nafobj, corefclasses, mentions):
 
@@ -421,8 +446,9 @@ def add_coreference_to_naf(nafobj, corefclasses, mentions):
                 nafCoref.set_type('entity')
                 for mid in mids:
                     mention = mentions.get(mid)
-                    term_id_span = get_terms_from_offsets(nafobj,mention.span)
-                    nafCoref.add_span(term_id_span)
+                    term_id_span, head_id = get_terms_from_offsets(nafobj,mention.span,mention.head_id)
+                    coref_span = create_span(term_id_span, head_id)
+                    nafCoref.add_span_object(coref_span)
                 nafobj.add_coreference(nafCoref)
 
 
