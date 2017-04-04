@@ -17,31 +17,28 @@ class Cmention:
         '''
         self.id = mid #confirmed
         self.span = span #becomes dictionary mapping token to string for creating the surface of substrings
-        self.string = None #confirmed
         self.number = ''
         self.gender = ''
         self.person = ''
         self.head_id = head_id
+        self.full_head = []
         self.head_pos = head_pos
-        self.head_string = ''
+        self.relaxed_span = []
         self.in_coref_class = [] #confirmed
         self.entity_type = None
         self.in_quotation = False
         self.coreference_prohibited = []
         self.begin_offset = ''
         self.end_offset = ''
+        self.modifiers = []
 
-        #full head
-        #underspecified entity type if name (and otherwise unknown)
-        #postmodifier
+    def set_span(self, span):
 
-    def set_mention_string(self, mention_str):
+        self.span = span
 
-        self.string = mention_str
+    def get_span(self):
 
-    def get_mention_string(self):
-
-        return self.string
+        return self.span
 
     def set_person(self, person):
         self.person = person
@@ -61,13 +58,25 @@ class Cmention:
     def get_gender(self):
         return self.gender
 
-            #   def set_pos_seq(self, pos_seq):
+    def set_full_head(self, full_head):
 
-     #   self.pos_seq = pos_seq
+        self.full_head = full_head
 
-    #ef get_pos_seq(self):
+    def get_full_head(self):
 
-    #    return self.pos_seq
+        return self.full_head
+
+    def set_relaxed_span(self, relaxed_span):
+
+        self.relaxed_span = relaxed_span
+
+    def add_relaxed_span_id(self, rsid):
+
+        self.relaxed_span.append(rsid)
+
+    def get_relaxed_span(self):
+
+        return self.relaxed_span
 
     def set_head_pos(self, head_pos):
 
@@ -76,14 +85,6 @@ class Cmention:
     def get_head_pos(self):
 
         return self.head_pos
-
-    def set_head_string(self, head_string):
-
-        self.head_string = head_string
-
-    def get_head_string(self):
-
-        return self.head_string
 
     def set_entity_type(self, etype):
 
@@ -116,6 +117,18 @@ class Cmention:
     def get_end_offset(self):
 
         return self.end_offset
+
+    def set_modifiers(self, mods):
+
+        self.modifiers = mods
+
+    def add_modifier(self, mod):
+
+        self.modifiers.append(mod)
+
+    def get_modifers(self):
+
+        return self.modifiers
 
 
 
