@@ -31,6 +31,7 @@ class Cmention:
         self.begin_offset = ''
         self.end_offset = ''
         self.modifiers = []
+        self.appositives = []
 
     def set_span(self, span):
 
@@ -126,9 +127,21 @@ class Cmention:
 
         self.modifiers.append(mod)
 
-    def get_modifers(self):
+    def get_modifiers(self):
 
         return self.modifiers
+
+    def set_appositives(self, apps):
+
+        self.appositives = apps
+
+    def add_appositive(self, app):
+
+        self.appositives.append(app)
+
+    def get_appositives(self):
+
+        return self.appositives
 
 
 

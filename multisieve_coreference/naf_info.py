@@ -48,6 +48,7 @@ class Cconstituent_information:
         self.span = span
         self.multiword = []
         self.modifiers = []
+        self.appositives = []
         self.etype = ''
 
     def set_span(self, span):
@@ -77,6 +78,18 @@ class Cconstituent_information:
     def get_modifiers(self):
 
         return self.modifiers
+
+    def set_appositives(self, apps):
+
+        self.appositives = apps
+
+    def add_appositive(self, app):
+
+        self.modifiers.append(app)
+
+    def get_appositives(self):
+
+        return self.appositives
 
     def set_etype(self, etype):
 
@@ -117,7 +130,7 @@ def get_relevant_head_ids(nafobj):
     return mention_heads
 
 
-def get_contituents(nafobj, mention_heads):
+def get_constituents(nafobj, mention_heads):
 
     global dep_extractor
 
@@ -128,9 +141,10 @@ def get_contituents(nafobj, mention_heads):
     for head in mention_heads:
         mydeps = get_constituent(head)
         myConstituent = Cconstituent_information(head, mydeps)
-        mwe, mods = get_mwe_and_modifiers(head)
+        mwe, mods, apps = get_mwe_and_modifiers_and_appositives(head)
         myConstituent.set_multiword(mwe)
         myConstituent.set_modifiers(mods)
+        myConstituent.set_appositives(apps)
         constituents[head] = myConstituent
 
     return constituents
@@ -206,9 +220,10 @@ def get_named_entities(nafobj):
             full_span = get_constituent(head_term)
             myConstituent = Cconstituent_information(head_term, full_span)
             myConstituent.set_multiword(espan)
-            mwe, mods = get_mwe_and_modifiers(head_term)
+            mwe, mods, apps = get_mwe_and_modifiers_and_appositives(head_term)
             myConstituent.set_modifiers(mods)
             myConstituent.set_etype(etype)
+            myConstituent.set_appositives(apps)
             if verify_span_uniqueness(found_spans, espan):
 
                 if not head_term in entities:
@@ -228,7 +243,7 @@ def get_mention_spans(nafobj):
     :return: dictionary of head term with as value constituent object (head id full head, modifiers, complete constituent0
     '''
     mention_heads = get_relevant_head_ids(nafobj)
-    mention_constituents = get_contituents(nafobj, mention_heads)
+    mention_constituents = get_constituents(nafobj, mention_heads)
     return mention_constituents
 
 
@@ -342,13 +357,20 @@ def create_mention(nafobj, constituentInfo, head, mid):
     full_head_tids = constituentInfo.get_multiword()
     full_head_span = get_span_in_offsets(nafobj, full_head_tids)
     mention.set_full_head(full_head_span)
-    #modifers:
+    #modifers and appositives:
     relaxed_span = offset_ids_span
     for mod_in_tids in constituentInfo.get_modifiers():
         mod_span = get_span_in_offsets(nafobj, mod_in_tids)
         mention.add_modifier(mod_span)
         for mid in mod_span:
-            relaxed_span.remove(mid)
+            if mid > head_id:
+                relaxed_span.remove(mid)
+    for app_in_tids in constituentInfo.get_appositives():
+        app_span = get_span_in_offsets(nafobj, app_in_tids)
+        mention.add_appositive(app_span)
+        for mid in app_span:
+            if mid > head_id:
+                relaxed_span.remove(mid)
     mention.set_relaxed_span(relaxed_span)
 
     #set sequence of pos FIXME: if not needed till end; remove
@@ -370,6 +392,32 @@ def create_mention(nafobj, constituentInfo, head, mid):
 
 
 
+def merge_two_mentions(mention1, mention2):
+    '''
+    Merge information from mention 1 into mention 2
+    :param mention1:
+    :param mention2:
+    :return: updated mention
+    '''
+    if mention1.head_id == mention2.head_id:
+        if set(mention1.span) == set(mention2.span):
+            #if mention1 does not have entity type, take the one from entity 2
+            if mention2.get_entity_type() is None:
+                mention2.set_entity_type(mention1.get_entity_type())
+        else:
+            #if mention2 has no entity type, it's span is syntax based (rather than from the NERC module)
+            if mention1.get_entity_type() is None:
+                mention2.set_span(mention1.get_span())
+    else:
+        if mention1.get_entity_type() is None:
+            mention2.set_head_id(mention1.get_head_id())
+        else:
+            mention2.set_entity_type(mention1.get_entity_type())
+
+    return mention2
+
+
+
 def merge_mentions(mentions, heads):
     '''
     Function that merges information from entity mentions
@@ -383,29 +431,18 @@ def merge_mentions(mentions, heads):
 
     for m, val in mentions.items():
         found = False
-        #FIXME: this was build with the idea that entity mentions did not have some head; changes now
         for prevm, preval in final_mentions.items():
             if val.head_id == preval.head_id:
+                updated_mention = merge_two_mentions(val, preval)
+                final_mentions[prevm] = updated_mention
                 found = True
-            elif set(val.span).issubset(set(preval.span)) and set(preval.span).issuperset(set(val.span)):
+            elif set(val.span) == set(preval.span):
+                print('same_set')
+                updated_mention = merge_two_mentions(val, preval)
+                final_mentions[prevm] = updated_mention
                 found = True
         if not found:
             final_mentions[m] = val
-
-    return final_mentions
-    #    if val.head_id is None or val.head_id is not None:
-    #        overlap = set(val.span) & set(heads.keys())
-    #       if len(overlap) > 1:
-    #            for head_id in overlap:
-    #               mention_id = heads.get(head_id)
-    #                if mention_id in final_mentions:
-    #                    del final_mentions[mention_id]
-    #        elif len(overlap) > 0:
-    #            for head_id in overlap:
-    #                final_mentions[m].head_id = head_id
-    #                mention_id = heads.get(head_id)
-    #                if mention_id in final_mentions:
-    #                    del final_mentions[mention_id]
 
     return final_mentions
 
@@ -470,7 +507,7 @@ def get_offset(nafobj, term_id):
     return term_offset
 
 
-def get_mwe_and_modifiers(head_id):
+def get_mwe_and_modifiers_and_appositives(head_id):
     '''
     Function that identifies full mwe head and posthead modifiers
     :param head_id: head_id
@@ -481,6 +518,7 @@ def get_mwe_and_modifiers(head_id):
 
     mwe = [head_id]
     mods = []
+    apps = []
 
     if head_id in head2deps:
         for deprel in head2deps.get(head_id):
@@ -489,8 +527,11 @@ def get_mwe_and_modifiers(head_id):
             elif deprel[1] == 'hd/mod':
                 dep_constituent = get_constituent(deprel[0])
                 mods.append(dep_constituent)
+            elif deprel[1] == 'hd/app':
+                dep_constituent = get_constituent(deprel[0])
+                apps.append(dep_constituent)
 
-    return mwe, mods
+    return mwe, mods, apps
 
 
 

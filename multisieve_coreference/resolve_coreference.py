@@ -205,6 +205,72 @@ def clean_up_coref_classes(coref_classes, mentions):
             my_mention.in_coref_class = [overall_id]
 
 
+def identify_span_matching_mention(span, mid, mentions):
+
+    matching_mentions = []
+    for ment_id, mention in mentions.items():
+        if not ment_id == mid:
+            if set(mention.get_span()) == set(span):
+                matching_mentions.append(ment_id)
+
+    return matching_mentions
+
+
+def identify_appositive_structures(mentions, coref_classes):
+    '''
+    Identifies appositive structures (previously extracted in NAF
+    :param mentions: mentions dictionary
+    :param coref_classes: object taking coreference into account
+    :return: None (mentions and coref_classes objects are updated
+    '''
+    for mid, mention in mentions.items():
+        if len(mention.get_appositives()) > 0:
+            for appositive in mention.get_appositives():
+                matching_mentions = identify_span_matching_mention(appositive, mid, mentions)
+                if len(matching_mentions) > 0:
+                    coref_id = None
+                    if len(mention.get_in_coref_class()) > 0:
+                        for c_class in mention.get_in_coref_class():
+                            if coref_classes[c_class] is not None:
+                                coref_id = c_class
+                    else:
+                        for matching_ment in matching_mentions:
+                            myMention = mentions.get(matching_ment)
+                            if len(myMention.get_coref_classes()) > 0:
+                                for c_coref in myMention.get_coref_classes():
+                                    if coref_classes.get(c_coref) is not None:
+                                        coref_id = c_coref
+                    if coref_id is None:
+                        coref_id = len(coref_classes)
+                    if not mention.get_id() in coref_classes[coref_id]:
+                        coref_classes[coref_id].append(mention.get_id())
+                        if not coref_id in mention.get_in_coref_class():
+                            mention.in_coref_class.append(coref_id)
+                    for matching in matching_mentions:
+                        if not matching in coref_classes[coref_id]:
+                            coref_classes[coref_id].append(matching)
+                            matchingMention = mentions.get(matching)
+                            if not coref_id in matchingMention.get_coref_classes():
+                                matchingMention.coref_classes.append(coref_id)
+
+
+def apply_precise_constructs(mentions, coref_classes):
+    '''
+    Function that moderates the precise constructs (calling one after the other
+    :param mentions: dictionary storing mentions
+    :param coref_classes: dictionary storing coref_classes so far
+    :return: None (mentions and coref_classes are updated)
+    '''
+    identify_appositive_structures(mentions, coref_classes)
+    #b. Predicative nominative
+    #c. Role Appositive
+    #d. Relative Pronoun
+    #e. Acronym
+    #f. Demonym
+
+
+
+
 def initialize_global_dictionaries(nafobj):
 
     global id2string, id2lemma
@@ -233,6 +299,7 @@ def resolve_coreference(nafin):
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
+    #sieve 4: Precise constructs
 
 
     return coref_classes, mentions
