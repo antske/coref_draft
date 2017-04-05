@@ -1,11 +1,12 @@
 from KafNafParserPy import *
 from mention_data import *
 from collections import defaultdict
-import sys
+import os
 
 dep_extractor = None
 head2deps = defaultdict(list)
 dep2heads = defaultdict(list)
+stop_words = []
 
 
 class CquotationNaf:
@@ -359,6 +360,43 @@ def analyze_pronoun(nafobj, term_id, mention):
     set_is_relative_pronoun(morphofeat, mention)
 
 
+def add_non_stopwords(nafobj, span, mention):
+    '''
+    Function that verifies which terms in span are not stopwords and adds these to non-stop-word list
+    :param nafobj: input naf (for linguistic information)
+    :param span: list of term ids
+    :param mention: mention object
+    :return:
+    '''
+    global stop_words
+    non_stop_terms = []
+
+    for tid in span:
+        my_term = nafobj.get_term(tid)
+        if not my_term.get_type() == 'closed' and not my_term.get_lemma().lowercase() in stop_words:
+            non_stop_terms.append(tid)
+
+    non_stop_span = get_span_in_offsets(nafobj, non_stop_terms)
+    mention.set_no_stop_words(non_stop_span)
+
+def add_main_modifiers(nafobj, span, mention):
+    '''
+    Function that creates list of all modifiers that are noun or adjective (possibly including head itself)
+    :param nafobj: input naf
+    :param span: list of term ids
+    :param mention: mention object
+    :return:
+    '''
+
+    main_mods = []
+    for tid in span:
+        term = nafobj.get_term(tid)
+        if term.get_pos() in ['adj','noun']:
+            main_mods.append(tid)
+
+    main_mods_offset = get_span_in_offsets(nafobj, main_mods)
+    mention.set_main_modifiers(main_mods_offset)
+
 
 def create_mention(nafobj, constituentInfo, head, mid):
     '''
@@ -378,6 +416,9 @@ def create_mention(nafobj, constituentInfo, head, mid):
     span = constituentInfo.get_span()
     offset_ids_span = get_span_in_offsets(nafobj, span)
     mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
+    #add no stop words and main modifiers   
+    add_non_stopwords(nafobj, span, mention)
+    add_main_modifiers(nafobj, span, mention)
     #mwe info
     full_head_tids = constituentInfo.get_multiword()
     full_head_span = get_span_in_offsets(nafobj, full_head_tids)
@@ -428,6 +469,7 @@ def merge_two_mentions(mention1, mention2):
     :param mention2:
     :return: updated mention
     '''
+
     if mention1.head_id == mention2.head_id:
         if set(mention1.span) == set(mention2.span):
             #if mention1 does not have entity type, take the one from entity 2
@@ -454,6 +496,7 @@ def merge_mentions(mentions, heads):
     :param heads: dictionary mapping head id to mention number
     :return: list of mentions where identical spans are merged
     '''
+
     final_mentions = {}
 
     #TODO: create merge function and merge identical candidates
@@ -483,6 +526,7 @@ def get_offsets_from_span(nafobj, span):
     :param span: list of term identifiers
     :return:
     '''
+
     offsets = []
     end_offsets = []
     for termid in span:
@@ -504,6 +548,7 @@ def get_term_length(nafobj, term_id):
     :param term_id: id of term in question
     :return:
     '''
+
     my_term = nafobj.get_term(term_id)
     length = 0
     expected_offset = 0
@@ -526,6 +571,7 @@ def get_offset(nafobj, term_id):
     :param term_id: id of term in question
     :return:
     '''
+
     my_term = nafobj.get_term(term_id)
     offsets = []
     for wid in my_term.get_span().get_span_ids():
@@ -570,6 +616,7 @@ def add_predicative_information(head_id, myConstituent):
     :param myConstituent: constituent object
     :return:
     '''
+
     global head2deps, dep2heads
 
     if head_id in dep2heads:
@@ -589,6 +636,7 @@ def get_mentions(nafobj):
     :return: list of Cmention objects
     '''
 
+    initiate_stopword_list()
     create_headdep_dicts(nafobj)
 
     mention_spans = get_mention_spans(nafobj)
@@ -657,6 +705,7 @@ def create_span(term_id_span, head_id):
     :param head_id: identifier for the head id
     :return: naf span object
     '''
+
     mySpan = Cspan()
     for term in term_id_span:
         if term == head_id:
@@ -1007,7 +1056,6 @@ def find_name_or_pronoun(nafobj, preceding_terms, quotation):
                 candidate_names.append(term.get_id())
 
     #change make dictionary with head term to constituent
-    candidates = []
     if len(candidate_names) > 0:
         remaining_candidates = get_candidates_not_part_of_addressee_topic(candidate_names, quotation)
         if len(remaining_candidates) > 0:
@@ -1209,6 +1257,16 @@ def create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qu
 
     return myQuote
 
+
+def initiate_stopword_list(lang='nl'):
+
+    global stop_words
+
+    stopfile = open('resources/' + lang + '/stop_words.txt','r')
+    for line in stopfile:
+        stop_words.append(line.rstrip())
+
+    stopfile.close()
 
 def initiate_id2string_dicts(nafobj):
 

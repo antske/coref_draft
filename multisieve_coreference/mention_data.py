@@ -34,6 +34,8 @@ class Cmention:
         self.modifiers = []
         self.appositives = []
         self.predicatives = []
+        self.no_stop_words = []
+        self.main_modifiers = []
 
     def set_span(self, span):
 
@@ -164,6 +166,31 @@ class Cmention:
     def get_predicatives(self):
 
         return self.predicatives
+
+    def set_no_stop_words(self, nsw):
+
+        self.no_stop_words = nsw
+
+    def add_no_stop_word(self, nsw):
+
+        self.no_stop_words.append(nsw)
+
+    def get_no_stop_words(self):
+
+        return self.no_stop_words
+
+    def set_main_modifiers(self, mmods):
+
+        self.main_modifiers = mmods
+
+    def add_main_modifier(self, mmod):
+
+        self.main_modifiers.append(mmod)
+
+    def get_main_modifiers(self):
+
+        return self.main_modifiers
+
 
 
 
