@@ -232,22 +232,22 @@ def update_matching_mentions(mentions, matches, mention1, coref_classes):
     else:
         for matching_ment in matches:
             myMention = mentions.get(matching_ment)
-            if len(myMention.get_coref_classes()) > 0:
-                for c_coref in myMention.get_coref_classes():
+            if len(myMention.get_in_coref_class()) > 0:
+                for c_coref in myMention.get_in_coref_class():
                     if coref_classes.get(c_coref) is not None:
                         coref_id = c_coref
     if coref_id is None:
         coref_id = len(coref_classes)
-    if not mention1.get_id() in coref_classes[coref_id]:
-        coref_classes[coref_id].append(mention1.get_id())
+    if not mention1.id in coref_classes[coref_id]:
+        coref_classes[coref_id].add(mention1.id)
         if not coref_id in mention1.get_in_coref_class():
             mention1.in_coref_class.append(coref_id)
     for matching in matches:
         if not matching in coref_classes[coref_id]:
-            coref_classes[coref_id].append(matching)
+            coref_classes[coref_id].add(matching)
             matchingMention = mentions.get(matching)
-            if not coref_id in matchingMention.get_coref_classes():
-                matchingMention.coref_classes.append(coref_id)
+            if not coref_id in matchingMention.get_in_coref_class():
+                matchingMention.in_coref_class.append(coref_id)
 
 def identify_appositive_structures(mentions, coref_classes):
     '''
@@ -288,7 +288,7 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
     for m, mention in mentions.items():
         if mention.is_relative_pronoun():
             matching = []
-            for om, othermention in mention.items():
+            for om, othermention in mentions.items():
                 if not om == m and mention.head_id in othermention.get_span():
                     for mod in othermention.get_modifiers():
                         if mention.head_id in mod:
@@ -362,6 +362,9 @@ def resolve_coreference(nafin):
     update_mentions(mentions, coref_classes)
 
     #sieve 4: Precise constructs
+    apply_precise_constructs(mentions, coref_classes)
+    clean_up_coref_classes(coref_classes, mentions)
+    update_mentions(mentions, coref_classes)
 
 
     return coref_classes, mentions
