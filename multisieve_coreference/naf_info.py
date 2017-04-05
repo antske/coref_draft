@@ -734,10 +734,35 @@ def create_span(term_id_span, head_id):
     return mySpan
 
 
+def get_ordered_coreference_chains(corefclasses, mentions):
+    '''
+    Function that creates new coreference dictionary with index of first mention as key (for ordering
+    :param corefclasses: identified coreference classes
+    :return: dictionary of coreference classes with new indeces
+    '''
+
+    coref_dict = {}
+
+    for mids in corefclasses.values():
+        if mids is not None:
+            first_index = 90000000000
+            for mid in mids:
+                mention = mentions.get(mid)
+                if mention.head_id < first_index:
+                    first_index = mention.head_id
+            coref_dict[first_index] = mids
+
+    return coref_dict
+
+
+
 def add_coreference_to_naf(nafobj, corefclasses, mentions):
 
+    #FIXME: (detail) for readability, add coreference chains in order
     start_count = get_starting_count(nafobj)
-    for mids in sorted(corefclasses.values()):
+    coref_according_to_index = get_ordered_coreference_chains(corefclasses, mentions)
+    for key in sorted(coref_according_to_index):
+        mids = coref_according_to_index.get(key)
         if not mids is None:
             mids = set(mids)
             if len(mids) > 1:

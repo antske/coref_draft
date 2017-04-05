@@ -544,10 +544,6 @@ def identify_antecedent(mention, mentions):
     return antecedent
 
 
-
-
-
-
 def resolve_pronoun_coreference(mentions, coref_classes):
 
     for mention in mentions.values():
