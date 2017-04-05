@@ -215,43 +215,95 @@ def identify_span_matching_mention(span, mid, mentions):
 
     return matching_mentions
 
+def update_matching_mentions(mentions, matches, mention1, coref_classes):
+    '''
+    Function that updates mentions and coref_classes objected based on identified matches
+    :param mentions:
+    :param mention1:
+    :param match:
+    :param coref_classes:
+    :return:
+    '''
+    coref_id = None
+    if len(mention1.get_in_coref_class()) > 0:
+        for c_class in mention1.get_in_coref_class():
+            if coref_classes[c_class] is not None:
+                coref_id = c_class
+    else:
+        for matching_ment in matches:
+            myMention = mentions.get(matching_ment)
+            if len(myMention.get_coref_classes()) > 0:
+                for c_coref in myMention.get_coref_classes():
+                    if coref_classes.get(c_coref) is not None:
+                        coref_id = c_coref
+    if coref_id is None:
+        coref_id = len(coref_classes)
+    if not mention1.get_id() in coref_classes[coref_id]:
+        coref_classes[coref_id].append(mention1.get_id())
+        if not coref_id in mention1.get_in_coref_class():
+            mention1.in_coref_class.append(coref_id)
+    for matching in matches:
+        if not matching in coref_classes[coref_id]:
+            coref_classes[coref_id].append(matching)
+            matchingMention = mentions.get(matching)
+            if not coref_id in matchingMention.get_coref_classes():
+                matchingMention.coref_classes.append(coref_id)
 
 def identify_appositive_structures(mentions, coref_classes):
     '''
-    Identifies appositive structures (previously extracted in NAF
+    Assigns coreference for appositive structures
     :param mentions: mentions dictionary
-    :param coref_classes: object taking coreference into account
-    :return: None (mentions and coref_classes objects are updated
+    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
+    :return: None (mentions and coref_classes objects are updated)
     '''
     for mid, mention in mentions.items():
         if len(mention.get_appositives()) > 0:
             for appositive in mention.get_appositives():
                 matching_mentions = identify_span_matching_mention(appositive, mid, mentions)
                 if len(matching_mentions) > 0:
-                    coref_id = None
-                    if len(mention.get_in_coref_class()) > 0:
-                        for c_class in mention.get_in_coref_class():
-                            if coref_classes[c_class] is not None:
-                                coref_id = c_class
-                    else:
-                        for matching_ment in matching_mentions:
-                            myMention = mentions.get(matching_ment)
-                            if len(myMention.get_coref_classes()) > 0:
-                                for c_coref in myMention.get_coref_classes():
-                                    if coref_classes.get(c_coref) is not None:
-                                        coref_id = c_coref
-                    if coref_id is None:
-                        coref_id = len(coref_classes)
-                    if not mention.get_id() in coref_classes[coref_id]:
-                        coref_classes[coref_id].append(mention.get_id())
-                        if not coref_id in mention.get_in_coref_class():
-                            mention.in_coref_class.append(coref_id)
-                    for matching in matching_mentions:
-                        if not matching in coref_classes[coref_id]:
-                            coref_classes[coref_id].append(matching)
-                            matchingMention = mentions.get(matching)
-                            if not coref_id in matchingMention.get_coref_classes():
-                                matchingMention.coref_classes.append(coref_id)
+                    update_matching_mentions(mentions, matching_mentions, mention, coref_classes)
+
+def identify_predicative_structures(mentions, coref_classes):
+    '''
+    Assigns coreference for predicative structures
+    :param mentions: dictoinary of mentions
+    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
+    :return: None (mentions and coref_classes objects are updated)
+    '''
+    for mid, mention in mentions.items():
+        if len(mention.get_predicatives()) > 0:
+            for predicative in mention.get_predicatives():
+                matching_mentions = identify_span_matching_mention(predicative, mid, mentions)
+                if len(matching_mentions) > 0:
+                    update_matching_mentions(mentions, matching_mentions, mention, coref_classes)
+
+
+def resolve_relative_pronoun_structures(mentions, coref_classes):
+    '''
+    Identifies relative pronouns and assigns them to the class of the noun they're modifying
+    :param mentions: dictionary of mentions
+    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
+    :return: None (mentions and coref_classes are updated)
+    '''
+    for m, mention in mentions.items():
+        if mention.is_relative_pronoun():
+            matching = []
+            for om, othermention in mention.items():
+                if not om == m and mention.head_id in othermention.get_span():
+                    for mod in othermention.get_modifiers():
+                        if mention.head_id in mod:
+                            matching.append(om)
+            if len(matching) > 0:
+                update_matching_mentions(mentions, matching, mention, coref_classes)
+
+def identify_acronyms_or_alternative_names(mentions, coref_classes):
+    '''
+    Identifies structures that add alternative name
+    :param mentions: dictionary of mentions
+    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
+    :return: None (mentions and coref_classes are updated)
+    '''
+
 
 
 def apply_precise_constructs(mentions, coref_classes):
@@ -262,11 +314,10 @@ def apply_precise_constructs(mentions, coref_classes):
     :return: None (mentions and coref_classes are updated)
     '''
     identify_appositive_structures(mentions, coref_classes)
-    #b. Predicative nominative
-    #c. Role Appositive
-    #d. Relative Pronoun
-    #e. Acronym
-    #f. Demonym
+    identify_predicative_structures(mentions, coref_classes)
+    resolve_relative_pronoun_structures(mentions, coref_classes)
+    #e. Acronym Agence France Presse [AFP] (check out what's involved)
+    #f. Demonym Israel, Israeli (later)
 
 
 

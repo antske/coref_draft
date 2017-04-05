@@ -5,6 +5,7 @@ import sys
 
 dep_extractor = None
 head2deps = defaultdict(list)
+dep2heads = defaultdict(list)
 
 
 class CquotationNaf:
@@ -49,6 +50,7 @@ class Cconstituent_information:
         self.multiword = []
         self.modifiers = []
         self.appositives = []
+        self.predicatives = []
         self.etype = ''
 
     def set_span(self, span):
@@ -85,11 +87,23 @@ class Cconstituent_information:
 
     def add_appositive(self, app):
 
-        self.modifiers.append(app)
+        self.appositives.append(app)
 
     def get_appositives(self):
 
         return self.appositives
+
+    def set_predicatives(self, preds):
+
+        self.predicatives = preds
+
+    def add_predicative(self, pred):
+
+        self.predicatives.append(pred)
+
+    def get_predicatives(self):
+
+        return self.predicatives
 
     def set_etype(self, etype):
 
@@ -145,6 +159,7 @@ def get_constituents(nafobj, mention_heads):
         myConstituent.set_multiword(mwe)
         myConstituent.set_modifiers(mods)
         myConstituent.set_appositives(apps)
+        add_predicative_information(head, myConstituent)
         constituents[head] = myConstituent
 
     return constituents
@@ -224,6 +239,7 @@ def get_named_entities(nafobj):
             myConstituent.set_modifiers(mods)
             myConstituent.set_etype(etype)
             myConstituent.set_appositives(apps)
+            add_predicative_information(head_term, myConstituent)
             if verify_span_uniqueness(found_spans, espan):
 
                 if not head_term in entities:
@@ -324,6 +340,10 @@ def set_pronoun_gender(morphofeat, mention):
     elif 'masc' in morphofeat:
         mention.set_number('masc')
 
+def set_is_relative_pronoun(morphofeat, mention):
+
+    if 'betr,' in morphofeat:
+        mention.set_relative_pronoun(True)
 
 def analyze_pronoun(nafobj, term_id, mention):
 
@@ -332,6 +352,7 @@ def analyze_pronoun(nafobj, term_id, mention):
     set_pronoun_person(morphofeat, mention)
     set_pronoun_gender(morphofeat, mention)
     set_pronoun_number(morphofeat, myterm, mention)
+    set_is_relative_pronoun(morphofeat, mention)
 
 
 
@@ -372,6 +393,10 @@ def create_mention(nafobj, constituentInfo, head, mid):
             if mid > head_id:
                 relaxed_span.remove(mid)
     mention.set_relaxed_span(relaxed_span)
+
+    for pred_in_tids in constituentInfo.get_predicatives():
+        pred_span = get_span_in_offsets(nafobj, pred_in_tids)
+        mention.add_predicative(pred_span)
 
     #set sequence of pos FIXME: if not needed till end; remove
     #os_seq = get_pos_of_span(nafobj, span)
@@ -514,7 +539,7 @@ def get_mwe_and_modifiers_and_appositives(head_id):
     :return: list of full head terms, list of posthead modifiers
     '''
 
-    global head2deps
+    global head2deps, dep2heads
 
     mwe = [head_id]
     mods = []
@@ -534,6 +559,24 @@ def get_mwe_and_modifiers_and_appositives(head_id):
     return mwe, mods, apps
 
 
+def add_predicative_information(head_id, myConstituent):
+    '''
+    Function that checks if mention is subject in a predicative structure and, if so, adds predicative info to constituent object
+    :param head_id: identifier of the head of the mention
+    :param myConstituent: constituent object
+    :return:
+    '''
+    global head2deps, dep2heads
+
+    if head_id in dep2heads:
+        for headrel in dep2heads.get(head_id):
+            if headrel[1] == 'hd/su':
+                headscomps = head2deps.get(headrel[0])
+                for deprel in headscomps:
+                    if deprel[1] in ['hd/predc','hd/predm']:
+                        predicative = get_constituent(deprel[0])
+                        myConstituent.add_predicative(predicative)
+
 
 def get_mentions(nafobj):
     '''
@@ -542,8 +585,7 @@ def get_mentions(nafobj):
     :return: list of Cmention objects
     '''
 
-    global head2deps
-    dep2heads = create_headdep_dicts(nafobj)
+    create_headdep_dicts(nafobj)
 
     mention_spans = get_mention_spans(nafobj)
     mentions = {}
@@ -694,9 +736,8 @@ def create_headdep_dicts(nafobj):
     :return: None
     '''
 
-    global head2deps
+    global head2deps, dep2heads
 
-    dep2heads = defaultdict(list)
 
     for dep in nafobj.get_dependencies():
         head = dep.get_from()
@@ -704,7 +745,6 @@ def create_headdep_dicts(nafobj):
         relation = dep.get_function()
         dep2heads[mydep].append([head, relation])
         head2deps[head].append([mydep, relation])
-    return dep2heads
 
 def create_set_of_tids_from_tidfunction(tidfunctionlist):
 
@@ -794,8 +834,9 @@ def identify_direct_links_to_sip(nafobj, quotation):
                         quotation.topic = topic_in_offsets
 
 
-def check_if_quotation_contains_dependent(quotation, dep2heads):
+def check_if_quotation_contains_dependent(quotation):
 
+    global dep2heads
     #FIXME: verify on larger set of development corpus whether this behavior is correct
     for tid in quotation.span:
         heads = dep2heads.get(tid)
@@ -876,8 +917,9 @@ def retrieve_quotation_following_sip(nafobj, terms):
     return source_head
 
 
-def identify_addressee_or_topic_relations(nafobj, tid, dep2heads, quotation):
+def identify_addressee_or_topic_relations(nafobj, tid, quotation):
 
+    global dep2heads
     #FIXME: language specific function
     heads = dep2heads.get(tid)
     if heads is not None:
@@ -935,9 +977,9 @@ def get_closest(candidates):
             selected_cand = cand
     return selected_cand
 
+def identify_primary_candidate(candidates):
 
-
-def identify_primary_candidate(candidates, dep2heads):
+    global dep2heads
 
     for cand in candidates:
         for tid in cand:
@@ -950,15 +992,14 @@ def identify_primary_candidate(candidates, dep2heads):
     return get_closest(candidates)
 
 
-
-def find_name_or_pronoun(nafobj, preceding_terms, dep2heads, quotation):
+def find_name_or_pronoun(nafobj, preceding_terms, quotation):
 
     #FIXME: not over paragraph borders; if nothing found, sentence after can also work
     candidate_names = []
     for tid in preceding_terms:
         term = nafobj.get_term(tid)
         if term.get_pos() == 'name' or term.get_pos() == 'pron':
-            if not identify_addressee_or_topic_relations(nafobj, tid, dep2heads, quotation):
+            if not identify_addressee_or_topic_relations(nafobj, tid, quotation):
                 candidate_names.append(term.get_id())
 
     #change make dictionary with head term to constituent
@@ -971,7 +1012,7 @@ def find_name_or_pronoun(nafobj, preceding_terms, dep2heads, quotation):
                 candidate_in_offsets = get_span_in_offsets(nafobj, candidates[0])
                 quotation.source = candidate_in_offsets
             else:
-                candidate = identify_primary_candidate(candidates, dep2heads)
+                candidate = identify_primary_candidate(candidates)
                 candidate_in_offsets = get_span_in_offsets(nafobj, candidate)
                 quotation.source = candidate_in_offsets
 
@@ -1023,7 +1064,7 @@ def get_following_terms_in_sentence(last_sentence, quotation_span):
     return following_terms
 
 
-def identify_source_introducing_constructions(nafobj, quotation, sentence_to_term, dep2heads):
+def identify_source_introducing_constructions(nafobj, quotation, sentence_to_term):
     '''
     Function that identifies structures that introduce sources of direct quotes
     :param nafobj: the input nafobj
@@ -1049,7 +1090,7 @@ def identify_source_introducing_constructions(nafobj, quotation, sentence_to_ter
         source_in_offsets = get_span_in_offsets(nafobj, source_constituent)
         quotation.source = source_in_offsets
     else:
-        find_name_or_pronoun(nafobj, preceding_terms, dep2heads, quotation)
+        find_name_or_pronoun(nafobj, preceding_terms, quotation)
     #3. check previous sentence for name or pronoun
 
 
@@ -1091,15 +1132,15 @@ def identify_direct_quotations(nafobj, mentions):
     '''
 
     nafquotations = get_quotation_spans(nafobj)
-    dep2heads = create_headdep_dicts(nafobj)
+    create_headdep_dicts(nafobj)
     toremove = []
     for quotation in nafquotations:
         identify_direct_links_to_sip(nafobj, quotation)
         if len(quotation.source) == 0:
             #this can lead to indication of quotation being attribution rather than quotation
-            if check_if_quotation_contains_dependent(quotation, dep2heads):
+            if check_if_quotation_contains_dependent(quotation):
                 sentence_to_terms = get_sentence_to_terms(nafobj)
-                identify_source_introducing_constructions(nafobj, quotation, sentence_to_terms, dep2heads)
+                identify_source_introducing_constructions(nafobj, quotation, sentence_to_terms)
             else:
                 toremove.append(quotation)
 

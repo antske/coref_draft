@@ -27,11 +27,13 @@ class Cmention:
         self.in_coref_class = [] #confirmed
         self.entity_type = None
         self.in_quotation = False
+        self.relative_pron = False
         self.coreference_prohibited = []
         self.begin_offset = ''
         self.end_offset = ''
         self.modifiers = []
         self.appositives = []
+        self.predicatives = []
 
     def set_span(self, span):
 
@@ -95,6 +97,14 @@ class Cmention:
 
         return self.entity_type
 
+    def set_relative_pronoun(self, bool):
+
+        self.relative_pron = bool
+
+    def is_relative_pronoun(self):
+
+        return self.relative_pron
+
     def set_in_coref_class(self, coref_id):
 
         self.in_coref_class.append(coref_id)
@@ -142,6 +152,18 @@ class Cmention:
     def get_appositives(self):
 
         return self.appositives
+
+    def set_predicatives(self, preds):
+
+        self.predicatives = preds
+
+    def add_predicative(self, pred):
+
+        self.predicatives.append(pred)
+
+    def get_predicatives(self):
+
+        return self.predicatives
 
 
 
