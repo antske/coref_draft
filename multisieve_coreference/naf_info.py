@@ -373,7 +373,7 @@ def add_non_stopwords(nafobj, span, mention):
 
     for tid in span:
         my_term = nafobj.get_term(tid)
-        if not my_term.get_type() == 'closed' and not my_term.get_lemma().lowercase() in stop_words:
+        if not my_term.get_type() == 'closed' and not my_term.get_lemma().lower() in stop_words:
             non_stop_terms.append(tid)
 
     non_stop_span = get_span_in_offsets(nafobj, non_stop_terms)
