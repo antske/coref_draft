@@ -431,11 +431,52 @@ def apply_proper_head_word_match(mentions, coref_classes):
 
     #FIXME: tool specific output for entity type
     for mention in mentions.values():
-        if mention.get_entity_type() in ['PER','ORG','LOC']:
+        if mention.get_entity_type() in ['PER','ORG','LOC','MISC']:
             coreferents = find_head_match_coreferents(mention, mentions)
             if len(coreferents) > 0:
                 update_matching_mentions(mentions, coreferents, mention, coref_classes)
 
+
+
+def find_relaxed_head_antecedents(mention, mentions):
+    '''
+    Function that identifies antecedents for which relaxed head match applies
+    :param mention:
+    :param mentions:
+    :return:
+    '''
+
+    boffset = mention.get_begin_offset()
+    full_head_string = get_string_from_ids(mention.get_full_head())
+    non_stop_words = get_string_from_ids(mention.get_no_stop_words())
+    antecedents = []
+
+    for mid, comp_mention in mentions.items():
+        #we want only antecedents
+        if comp_mention.get_end_offset() < boffset:
+            if comp_mention.get_entity_type() == mention.get_entity_type():
+                match = True
+                full_comp_head = get_string_from_ids(comp_mention.get_full_head())
+                for word in full_head_string.split():
+                    if not word in full_comp_head:
+                        match = False
+                full_span = get_string_from_ids(comp_mention.span)
+                for non_stop_word in non_stop_words:
+                    if not non_stop_word in full_span:
+                        match = False
+                if match:
+                    antecedents.append(mid)
+
+    return antecedents
+
+
+def apply_relaxed_head_match(mentions, coref_classes):
+
+    for mention in mentions.values():
+        if mention.get_entity_type in ['PER','ORG','LOC','MISC']:
+            antecedents = find_relaxed_head_antecedents(mention, mentions)
+            if len(antecedents) > 0:
+                update_matching_mentions(mentions, antecedents, mention, coref_classes)
 
 
 
@@ -483,6 +524,11 @@ def resolve_coreference(nafin):
     update_mentions(mentions, coref_classes)
 
     #sieve 9: Relaxed Head Match
+    apply_relaxed_head_match(mentions, coref_classes)
+    clean_up_coref_classes(coref_classes, mentions)
+    update_mentions(mentions, coref_classes)
+
+    #sieve 10
 
     return coref_classes, mentions
 
