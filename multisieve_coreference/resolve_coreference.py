@@ -303,7 +303,18 @@ def identify_acronyms_or_alternative_names(mentions, coref_classes):
     :param coref_classes: dictionary of coreference class with all coreferring mentions as value
     :return: None (mentions and coref_classes are updated)
     '''
-
+    #FIXME input specific
+    for m, mention in mentions.items():
+        if mention.get_entity_type() in ['PER','ORG','LOC','MISC'] and len(mention.get_modifiers()) > 0:
+            final_matches = []
+            for mod in mention.get_modifiers():
+                matching_mentions = identify_span_matching_mention(mod, m, mentions)
+                for matchid in matching_mentions:
+                    mymatch = mentions.get(matchid)
+                    if mymatch.get_entity_type() in ['PER','ORG','LOC','MISC']:
+                        final_matches.append(matchid)
+            if len(final_matches) > 0:
+                update_matching_mentions(mentions, final_matches, mention, coref_classes)
 
 
 def apply_precise_constructs(mentions, coref_classes):
@@ -316,7 +327,7 @@ def apply_precise_constructs(mentions, coref_classes):
     identify_appositive_structures(mentions, coref_classes)
     identify_predicative_structures(mentions, coref_classes)
     resolve_relative_pronoun_structures(mentions, coref_classes)
-    #e. Acronym Agence France Presse [AFP] (check out what's involved)
+    identify_acronyms_or_alternative_names(mentions, coref_classes)
     #f. Demonym Israel, Israeli (later)
 
 
