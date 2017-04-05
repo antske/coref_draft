@@ -479,6 +479,85 @@ def apply_relaxed_head_match(mentions, coref_classes):
                 update_matching_mentions(mentions, antecedents, mention, coref_classes)
 
 
+def is_compatible(string1, string2):
+    '''
+    Generic function to check if values are not incompatible
+    :param string1: first string
+    :param string2: second string
+    :return: boolean
+    '''
+    #if either is underspecified, they are not incompatible
+    if string1 is None or string2 is None:
+        return True
+    if len(string1) == 0 or len(string2) == 0:
+        return True
+    if string1 == string2:
+        return True
+
+    return False
+
+
+def check_compatibility(mention1, mention2):
+
+    if not is_compatible(mention1.get_number(), mention2.get_number()):
+        return False
+    if not is_compatible(mention1.get_gender(), mention2.get_gender()):
+        return False
+    #speaker/addressee 1/2 person was taken care of earlier on
+    if not is_compatible(mention1.get_person(), mention2.get_person()):
+        return False
+    if not is_compatible(mention1.get_entity_type(), mention2.get_entity_type()):
+        return False
+
+    return True
+
+
+def get_candidates_and_distance(mention, mentions):
+
+    candidates = {}
+    sent_nr = mention.get_sentence_number()
+    for mid, comp_mention in mentions.items():
+        if mention.head_id > comp_mention.head_id:
+            csnr = comp_mention.get_sentence_number()
+            #only consider up to 3 preceding sentences
+            if csnr <= sent_nr <= csnr + 3:
+                #check if not prohibited
+                if not mid in mention.coreference_prohibited:
+                    if check_compatibility(mention, comp_mention):
+                        candidates[mid] = comp_mention.head_id
+
+    return candidates
+
+
+def identify_antecedent(mention, mentions):
+
+    candidates = get_candidates_and_distance(mention, mentions)
+    mention_index = mention.head_id
+    distance = 1000000
+    antecedent = None
+    for candidate, head_index in candidates.items():
+        candidate_distance = mention_index - head_index
+        if candidate_distance < distance:
+            distance = candidate_distance
+            antecedent = candidate
+
+    return antecedent
+
+
+
+
+
+
+def resolve_pronoun_coreference(mentions, coref_classes):
+
+    for mention in mentions.values():
+        #we only deal with unresolved pronouns here
+        if mention.get_head_pos() == 'pron' and len(mention.in_coref_class) == 0:
+            antecedent = identify_antecedent(mention, mentions)
+            if antecedent is not None:
+                update_matching_mentions(mentions, [antecedent], mention, coref_classes)
+
+
 
 def initialize_global_dictionaries(nafobj):
 
@@ -529,6 +608,9 @@ def resolve_coreference(nafin):
     update_mentions(mentions, coref_classes)
 
     #sieve 10
+    resolve_pronoun_coreference(mentions, coref_classes)
+    clean_up_coref_classes(coref_classes, mentions)
+    update_mentions(mentions, coref_classes)
 
     return coref_classes, mentions
 

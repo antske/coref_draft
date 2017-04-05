@@ -314,7 +314,7 @@ def get_pos_of_span(nafobj, span):
 
     return pos_seq
 
-def set_pronoun_person(morphofeat, mention):
+def identify_and_set_person(morphofeat, mention):
 
     if '1' in morphofeat:
         mention.set_person('1')
@@ -324,7 +324,7 @@ def set_pronoun_person(morphofeat, mention):
         mention.set_person('3')
 
 
-def set_pronoun_number(morphofeat, myterm, mention):
+def identify_and_set_number(morphofeat, myterm, mention):
 
     if 'ev' in morphofeat:
         mention.set_number('ev')
@@ -338,25 +338,27 @@ def set_pronoun_number(morphofeat, myterm, mention):
             mention.set_number('mv')
 
 
-def set_pronoun_gender(morphofeat, mention):
+def identify_and_set_gender(morphofeat, mention):
 
     if 'fem' in morphofeat:
         mention.set_number('fem')
     elif 'masc' in morphofeat:
         mention.set_number('masc')
+    elif 'onz,' in morphofeat:
+        mention.set_number('neut')
 
 def set_is_relative_pronoun(morphofeat, mention):
 
     if 'betr,' in morphofeat:
         mention.set_relative_pronoun(True)
 
-def analyze_pronoun(nafobj, term_id, mention):
+def analyze_nominal_information(nafobj, term_id, mention):
 
     myterm = nafobj.get_term(term_id)
     morphofeat = myterm.get_morphofeat()
-    set_pronoun_person(morphofeat, mention)
-    set_pronoun_gender(morphofeat, mention)
-    set_pronoun_number(morphofeat, myterm, mention)
+    identify_and_set_person(morphofeat, mention)
+    identify_and_set_gender(morphofeat, mention)
+    identify_and_set_number(morphofeat, myterm, mention)
     set_is_relative_pronoun(morphofeat, mention)
 
 
@@ -398,6 +400,18 @@ def add_main_modifiers(nafobj, span, mention):
     mention.set_main_modifiers(main_mods_offset)
 
 
+def get_sentence_number(nafobj, head):
+
+    myterm = nafobj.get_term(head)
+    tokid = myterm.get_span().get_span_ids()[0]
+    mytoken = nafobj.get_token(tokid)
+    sent_nr = int(mytoken.get_sent())
+
+    return sent_nr
+
+
+
+
 def create_mention(nafobj, constituentInfo, head, mid):
     '''
     Function that creates mention object from naf information
@@ -416,6 +430,8 @@ def create_mention(nafobj, constituentInfo, head, mid):
     span = constituentInfo.get_span()
     offset_ids_span = get_span_in_offsets(nafobj, span)
     mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
+    sentence_number = get_sentence_number(nafobj, head)
+    mention.set_sentence_number(sentence_number)
     #add no stop words and main modifiers
     add_non_stopwords(nafobj, span, mention)
     add_main_modifiers(nafobj, span, mention)
@@ -450,8 +466,8 @@ def create_mention(nafobj, constituentInfo, head, mid):
     if head != None:
         head_pos = get_pos_of_term(nafobj, head)
         mention.set_head_pos(head_pos)
-        if head_pos == 'pron':
-            analyze_pronoun(nafobj, head, mention)
+        if head_pos in ['pron','noun','name']:
+            analyze_nominal_information(nafobj, head, mention)
 
     begin_offset, end_offset = get_offsets_from_span(nafobj, span)
     mention.set_begin_offset(begin_offset)

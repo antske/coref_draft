@@ -36,6 +36,7 @@ class Cmention:
         self.predicatives = []
         self.no_stop_words = []
         self.main_modifiers = []
+        self.sentence_number = ''
 
     def set_span(self, span):
 
@@ -191,7 +192,13 @@ class Cmention:
 
         return self.main_modifiers
 
+    def set_sentence_number(self, sentnr):
 
+        self.sentence_number = sentnr
+
+    def get_sentence_number(self):
+
+        return self.sentence_number
 
 
 class Cmentions:
