@@ -180,6 +180,9 @@ def verify_span_uniqueness(found_spans, span):
 
 def find_closest_to_head(span):
 
+    if len(span) == 1:
+        return span[0]
+
     head_term_candidates = defaultdict(list)
 
     for tid in span:
@@ -189,12 +192,13 @@ def find_closest_to_head(span):
                 if deprel[0] in span:
                     count += 1
             head_term_candidates[count].append(tid)
-    max_deps = sorted(head_term_candidates.keys())[-1]
-    best_candidates = head_term_candidates.get(max_deps)
-    if len(best_candidates) > 0:
-        return best_candidates[0]
-    else:
-        return span[0]
+    if len(head_term_candidates) > 0:
+        max_deps = sorted(head_term_candidates.keys())[-1]
+        best_candidates = head_term_candidates.get(max_deps)
+        if len(best_candidates) > 0:
+            return best_candidates[0]
+
+    return span[0]
 
 
 def find_head_in_span(span):
