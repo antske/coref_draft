@@ -416,7 +416,7 @@ def create_mention(nafobj, constituentInfo, head, mid):
     span = constituentInfo.get_span()
     offset_ids_span = get_span_in_offsets(nafobj, span)
     mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
-    #add no stop words and main modifiers   
+    #add no stop words and main modifiers
     add_non_stopwords(nafobj, span, mention)
     add_main_modifiers(nafobj, span, mention)
     #mwe info

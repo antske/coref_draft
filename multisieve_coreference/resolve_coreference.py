@@ -331,6 +331,112 @@ def apply_precise_constructs(mentions, coref_classes):
     #f. Demonym Israel, Israeli (later)
 
 
+def find_strict_head_antecedents(mention, mentions, sieve):
+    '''
+    Function that looks at which other mentions might be antecedent for the current mention
+    :param mention: current mention
+    :param mentions: dictionary of all mentions
+    :return: list of antecedent ids
+    '''
+    head_string = id2string.get(mention.head_id)
+    non_stop_words = get_string_from_ids(mention.get_no_stop_words())
+    main_mods = get_string_from_ids(mention.get_main_modifiers())
+    antecedents = []
+    for mid, comp_mention in mentions.items():
+        #offset must be smaller to be antecedent and not i-to-i
+        if comp_mention.head_id < mention.head_id and not mention.head_id <= comp_mention.get_end_offset():
+            if head_string == id2string.get(comp_mention.head_id):
+                match = True
+                full_span = get_string_from_ids(comp_mention.span)
+                if sieve in ['5','7']:
+                    for non_stop_word in non_stop_words:
+                        if not non_stop_word in full_span:
+                            match = False
+                if sieve in ['5','6']:
+                    for mmod in main_mods:
+                        if not mmod in full_span:
+                            match = False
+                if match:
+                    antecedents.append(mid)
+
+    return antecedents
+
+
+def apply_strict_head_match(mentions, coref_classes, sieve='5'):
+
+    #FIXME: parser specific check for pronoun
+    for mention in mentions.values():
+        if not mention.get_head_pos() == 'pron':
+            antecedents = find_strict_head_antecedents(mention, mentions, sieve)
+            if len(antecedents) > 0:
+                update_matching_mentions(mentions, antecedents, mention, coref_classes)
+
+
+def only_identical_numbers(span1, span2):
+
+    word_list1 = get_string_from_ids(span1)
+    word_list2 = get_string_from_ids(span2)
+
+    for word in word_list1:
+        if word.isdigit() and not word in word_list2:
+            return False
+
+    return True
+
+
+def contains_number(span):
+
+    for word in get_string_from_ids(span):
+        if word.isdigit():
+            return True
+
+    return False
+
+
+def find_head_match_coreferents(mention, mentions):
+    '''
+    Function that looks at which mentions might be antecedent for the current mention
+    :param mention: current mention
+    :param mentions: dictionary of all mentions
+    :return: list of mention coreferents
+    '''
+
+    boffset = mention.get_begin_offset()
+    eoffset = mention.get_end_offset()
+    full_head_string = get_string_from_ids(mention.get_full_head())
+    contains_numbers = contains_number(mention.span)
+
+    coreferents = []
+
+    for mid, comp_mention in mentions.items():
+        if not mid == mention.id and comp_mention.get_entity_type() in ['PER','ORG','LOC']:
+            #mention may not be included in other mention
+            if not comp_mention.get_begin_offset <= boffset and comp_mention.get_end_offset() >= eoffset:
+                match = True
+                comp_string = get_string_from_ids(comp_mention.get_full_head())
+                for word in full_head_string.split():
+                    if not word in comp_string:
+                        match = False
+                if contains_numbers and contains_number(comp_mention.span):
+                    if not only_identical_numbers(mention.span, comp_mention.span):
+                        match = False
+                if match:
+                    coreferents.append(mid)
+
+    return coreferents
+
+
+
+def apply_proper_head_word_match(mentions, coref_classes):
+
+    #FIXME: tool specific output for entity type
+    for mention in mentions.values():
+        if mention.get_entity_type() in ['PER','ORG','LOC']:
+            coreferents = find_head_match_coreferents(mention, mentions)
+            if len(coreferents) > 0:
+                update_matching_mentions(mentions, coreferents, mention, coref_classes)
+
+
 
 
 def initialize_global_dictionaries(nafobj):
@@ -366,6 +472,17 @@ def resolve_coreference(nafin):
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
+    #sieve 5-7: Strict Head Match
+    apply_strict_head_match(mentions, coref_classes)
+    clean_up_coref_classes(coref_classes, mentions)
+    update_mentions(mentions, coref_classes)
+
+    #sieve 8: Proper Head Word Match
+    apply_proper_head_word_match(mentions, coref_classes)
+    clean_up_coref_classes(coref_classes, mentions)
+    update_mentions(mentions, coref_classes)
+
+    #sieve 9: Relaxed Head Match
 
     return coref_classes, mentions
 
