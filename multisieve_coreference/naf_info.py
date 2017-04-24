@@ -216,8 +216,8 @@ def find_head_in_span(span):
         if set(span).issubset(set(constituent)):
             if head_term is None:
                 head_term = term
-            else:
-                print('span has more than one head')
+       #     else:
+       #         print('span has more than one head')
     if head_term is None:
         head_term = find_closest_to_head(span)
     return head_term
@@ -445,13 +445,13 @@ def create_mention(nafobj, constituentInfo, head, mid):
         mod_span = get_span_in_offsets(nafobj, mod_in_tids)
         mention.add_modifier(mod_span)
         for mid in mod_span:
-            if mid > head_id:
+            if mid > head_id and mid in relaxed_span:
                 relaxed_span.remove(mid)
     for app_in_tids in constituentInfo.get_appositives():
         app_span = get_span_in_offsets(nafobj, app_in_tids)
         mention.add_appositive(app_span)
         for mid in app_span:
-            if mid > head_id:
+            if mid > head_id and mid in relaxed_span:
                 relaxed_span.remove(mid)
     mention.set_relaxed_span(relaxed_span)
 
@@ -525,7 +525,7 @@ def merge_mentions(mentions, heads):
                 final_mentions[prevm] = updated_mention
                 found = True
             elif set(val.span) == set(preval.span):
-                print('same_set')
+               # print('same_set')
                 updated_mention = merge_two_mentions(val, preval)
                 final_mentions[prevm] = updated_mention
                 found = True
@@ -551,8 +551,11 @@ def get_offsets_from_span(nafobj, span):
         offsets.append(offset)
         end_offsets.append(offset+length)
 
-    begin_offset = sorted(offsets)[0]
-    end_offset = sorted(end_offsets)[-1]
+    begin_offset = 0
+    end_offset = 0
+    if len(offsets) > 0:
+        begin_offset = sorted(offsets)[0]
+        end_offset = sorted(end_offsets)[-1]
 
     return begin_offset, end_offset
 
@@ -864,6 +867,7 @@ def analyze_head_relations(nafobj, head_term, head2deps):
     addressee = None
     topic = None
     #FIXME: we want to check the preposition
+    #FIXME: no dependents case does occur; check with bigger corpus
     if dependents is not None:
         for dep in dependents:
             if dep[1] == 'hd/su':
@@ -890,8 +894,6 @@ def analyze_head_relations(nafobj, head_term, head2deps):
                                 elif term.get_lemma() == 'over':
                                     topic = get_constituent(deprel[0])
 
-    else:
-        print(head_term, 'has no dependents')
 
     return speaker, addressee, topic
 
@@ -945,15 +947,17 @@ def check_if_quotation_contains_dependent(quotation):
                                 return False
                             elif headrel[1] in ['crd/cnj']:
                                 motherheadrels = dep2heads.get(headrel[0])
-                                for mhid in motherheadrels:
-                                    if mhid[1] in ['cmp/body','hd/predc','hd/obj1','hd/vc','hd/su','hd/pc']:
-                                        return False
-                                    elif not mhid[1] in ['hd/app','tag/nucl','--/--','dp/dp','-- / --','nucl/sat']:
-                                        print(tid, headids.difference(set(span_with_quotes)), 'has outside head')
-                                        print(motherheadrels)
-                            elif not headrel[1] in ['hd/app','tag/nucl','--/--','dp/dp','-- / --','nucl/sat']:
-                                print(tid, headids.difference(set(span_with_quotes)), 'has outside head')
-                                print(heads, quotation.span)
+                                if motherheadrels is not None:
+                                    for mhid in motherheadrels:
+                                        if mhid[1] in ['cmp/body','hd/predc','hd/obj1','hd/vc','hd/su','hd/pc']:
+                                            return False
+                                  #  elif not mhid[1] in ['hd/app','tag/nucl','--/--','dp/dp','-- / --','nucl/sat']:
+                                  #      print(tid, headids.difference(set(span_with_quotes)), 'has outside head')
+                                  #      print(motherheadrels)
+                            #FIXME: debugs need to be checked out on bigger corpus; set up development mode
+                           # elif not headrel[1] in ['hd/app','tag/nucl','--/--','dp/dp','-- / --','nucl/sat']:
+                           #     print(tid, headids.difference(set(span_with_quotes)), 'has outside head')
+                           #     print(heads, quotation.span)
     return True
 
 
@@ -974,8 +978,12 @@ def get_sentences_of_quotation(nafobj, quotation):
 def get_previous_and_next_sentence(sentences):
 
     ordered_sentences = sorted(sentences)
-    previous_sentence = ordered_sentences[0] - 1
-    following_sentence = ordered_sentences[-1] + 1
+    if len(ordered_sentences) > 0:
+        previous_sentence = ordered_sentences[0] - 1
+        following_sentence = ordered_sentences[-1] + 1
+    else:
+        previous_sentence = 0
+        following_sentence = 0
 
     return previous_sentence, following_sentence
 
@@ -988,9 +996,10 @@ def retrieve_sentence_preceding_sip(nafobj, terms):
         myterm = nafobj.get_term(tid)
         if myterm.get_lemma() == 'volgens':
             deps = head2deps.get(tid)
-            for dep in deps:
-                if dep[1] == 'hd/obj1':
-                    source_head = dep[0]
+            if deps is not None:
+                for dep in deps:
+                    if dep[1] == 'hd/obj1':
+                        source_head = dep[0]
 
     return source_head
 
@@ -1004,9 +1013,10 @@ def retrieve_quotation_following_sip(nafobj, terms):
         myterm = nafobj.get_term(tid)
         if myterm.get_lemma() == 'aldus':
             deps = head2deps.get(tid)
-            for dep in deps:
-                if dep[1] == 'hd/obj1':
-                    source_head = dep[0]
+            if deps is not None:
+                for dep in deps:
+                    if dep[1] == 'hd/obj1':
+                        source_head = dep[0]
 
     return source_head
 
@@ -1129,15 +1139,16 @@ def get_preceding_terms_in_sentence(first_sentence, quotation_span):
     #FIXME; move to offset based ids earlier; then this hack is not necessary
     quotation_numbers = create_ordered_number_span(quotation_span)
     preceeding_terms = []
-    for tid in first_sentence:
-        if 't_' in tid:
-            tnumber = int(tid.lstrip('t_'))
-            if tnumber < quotation_numbers[0]:
-                preceeding_terms.append(tid)
-        elif 't' in tid:
-            tnumber = int(tid.lstrip('t'))
-            if tnumber < quotation_numbers[0]:
-                preceeding_terms.append(tid)
+    if len(quotation_numbers) > 0:
+        for tid in first_sentence:
+            if 't_' in tid:
+                tnumber = int(tid.lstrip('t_'))
+                if tnumber < quotation_numbers[0]:
+                    preceeding_terms.append(tid)
+            elif 't' in tid:
+                tnumber = int(tid.lstrip('t'))
+                if tnumber < quotation_numbers[0]:
+                    preceeding_terms.append(tid)
     return preceeding_terms
 
 def get_following_terms_in_sentence(last_sentence, quotation_span):
@@ -1171,8 +1182,11 @@ def identify_source_introducing_constructions(nafobj, quotation, sentence_to_ter
     #preceding_terms = sentence_to_term.get(str(prev_sent)) + sentence_to_term.get(str(prev_sent + 1))
 
     #start with 'aldus' construction; this is more robust
-    following_terms = get_following_terms_in_sentence(sentence_to_term.get(str(follow_sent - 1)),quotation.span)
-    source_head = retrieve_quotation_following_sip(nafobj,following_terms)
+    following_sentence = sentence_to_term.get(str(follow_sent - 1))
+    source_head = None
+    if following_sentence is not None:
+        following_terms = get_following_terms_in_sentence(following_sentence,quotation.span)
+        source_head = retrieve_quotation_following_sip(nafobj,following_terms)
 
     if source_head is None:
         preceding_terms = get_preceding_terms_in_sentence(sentence_to_term.get(str(prev_sent + 1)),quotation.span)
@@ -1262,7 +1276,7 @@ def link_span_ids_to_mentions(span, mentions):
         if set(span).issubset(set(mention.span)) or set(span).issuperset(mention.span):
             return key
 
-    import traceback; print(traceback.extract_stack(limit=2)[-1][2] + " - span: " + str(span))
+#    import traceback; print(traceback.extract_stack(limit=2)[-1][2] + " - span: " + str(span))
 
 
 def create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, quote_id):

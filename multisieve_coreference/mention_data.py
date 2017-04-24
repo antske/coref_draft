@@ -64,28 +64,28 @@ class Cmention:
     def get_gender(self):
         return self.gender
 
-    def set_full_head(self, full_head):
+    def set_head_id(self, hid):
+        self.head_id = hid
 
+    def get_head_id(self):
+        return self.head_id
+
+    def set_full_head(self, full_head):
         self.full_head = full_head
 
     def get_full_head(self):
-
         return self.full_head
 
     def set_relaxed_span(self, relaxed_span):
-
         self.relaxed_span = relaxed_span
 
     def add_relaxed_span_id(self, rsid):
-
         self.relaxed_span.append(rsid)
 
     def get_relaxed_span(self):
-
         return self.relaxed_span
 
     def set_head_pos(self, head_pos):
-
         self.head_pos = head_pos
 
     def get_head_pos(self):
