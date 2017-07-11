@@ -414,7 +414,7 @@ def find_head_match_coreferents(mention, mentions):
     for mid, comp_mention in mentions.items():
         if not mid == mention.id and comp_mention.get_entity_type() in ['PER','ORG','LOC']:
             #mention may not be included in other mention
-            if not comp_mention.get_begin_offset <= boffset and comp_mention.get_end_offset() >= eoffset:
+            if not comp_mention.get_begin_offset() <= boffset and comp_mention.get_end_offset() >= eoffset:
                 match = True
                 comp_string = get_string_from_ids(comp_mention.get_full_head())
                 for word in full_head_string.split():
