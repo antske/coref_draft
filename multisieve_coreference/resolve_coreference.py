@@ -1,7 +1,7 @@
 import sys
 from KafNafParserPy import *
 from collections import defaultdict
-from naf_info import get_mentions, add_coreference_to_naf, identify_direct_quotations, initiate_id2string_dicts
+from .naf_info import get_mentions, add_coreference_to_naf, identify_direct_quotations, initiate_id2string_dicts
 
 
 #global values mapping identifiers to string and lemma respectively
@@ -414,7 +414,7 @@ def find_head_match_coreferents(mention, mentions):
     for mid, comp_mention in mentions.items():
         if not mid == mention.id and comp_mention.get_entity_type() in ['PER','ORG','LOC']:
             #mention may not be included in other mention
-            if not comp_mention.get_begin_offset <= boffset and comp_mention.get_end_offset() >= eoffset:
+            if not comp_mention.get_begin_offset() <= boffset and comp_mention.get_end_offset() >= eoffset:
                 match = True
                 comp_string = get_string_from_ids(comp_mention.get_full_head())
                 for word in full_head_string.split():
@@ -614,13 +614,20 @@ def resolve_coreference(nafin):
     return coref_classes, mentions
 
 
-def main(argv=None):
-
-    #args and options left for later
-
-    nafin = KafNafParser(sys.stdin)
+def process_coreference(nafin):
+    """
+    Process coreferences and add to the given NAF.
+    Note that coreferences are added in place, and the NAF is returned for convenience
+    """
     coref_classes, mentions = resolve_coreference(nafin)
     add_coreference_to_naf(nafin, coref_classes, mentions)
+    return nafin
+    
+
+def main(argv=None):
+    #args and options left for later
+    nafin = KafNafParser(sys.stdin)
+    nafin = process_coreference(nafin)
     nafin.dump()
 
 if __name__ == '__main__':
