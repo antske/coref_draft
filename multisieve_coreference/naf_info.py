@@ -351,6 +351,10 @@ def set_is_relative_pronoun(morphofeat, mention):
 
     if 'betr,' in morphofeat:
         mention.set_relative_pronoun(True)
+    if 'refl,' in morphofeat:
+        mention.set_reflective_pronoun(True)
+
+
 
 def analyze_nominal_information(nafobj, term_id, mention):
 

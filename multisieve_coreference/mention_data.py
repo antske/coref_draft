@@ -28,6 +28,7 @@ class Cmention:
         self.entity_type = None
         self.in_quotation = False
         self.relative_pron = False
+        self.reflective_pron = False
         self.coreference_prohibited = []
         self.begin_offset = ''
         self.end_offset = ''
@@ -107,6 +108,14 @@ class Cmention:
     def is_relative_pronoun(self):
 
         return self.relative_pron
+
+    def set_reflective_pronoun(self, bool):
+
+        self.reflective_pron = bool
+
+    def is_reflective_pronoun(self):
+
+        return self.reflective_pron
 
     def set_in_coref_class(self, coref_id):
 

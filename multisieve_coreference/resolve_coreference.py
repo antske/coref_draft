@@ -292,12 +292,37 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
         if mention.is_relative_pronoun():
             matching = []
             for om, othermention in mentions.items():
-                if not om == m and mention.head_id in othermention.get_span():
+                if not om == m and not mention.head_id in othermention.get_span():
                     for mod in othermention.get_modifiers():
                         if mention.head_id in mod:
                             matching.append(om)
             if len(matching) > 0:
                 update_matching_mentions(mentions, matching, mention, coref_classes)
+
+def resolve_reflective_pronoun_structures(mentions, coref_classes):
+    '''
+    Identifies mention that is correct coreference for relfectives
+    :param mentions:
+    :param coref_classes:
+    :return:
+    '''
+    for m, mention in mentions.items():
+        if mention.is_reflective_pronoun():
+            matching = []
+            sent_nr = mention.get_sentence_number()
+            for om, othermention in mentions.items():
+                if othermention.get_sentence_number() == sent_nr:
+                    if not om == m and not mention.head_id in othermention.get_span():
+                        if int(othermention.head_id) < mention.head_id:
+                            matching.append(om)
+            if len(matching) == 1:
+                update_matching_mentions(mentions, matching, mention, coref_classes)
+            elif len(matching) > 1:
+                mymatch = sorted(matching)[-1]
+                update_matching_mentions(mentions, [mymatch], mention, coref_classes)
+
+
+
 
 def identify_acronyms_or_alternative_names(mentions, coref_classes):
     '''
@@ -320,6 +345,34 @@ def identify_acronyms_or_alternative_names(mentions, coref_classes):
                 update_matching_mentions(mentions, final_matches, mention, coref_classes)
 
 
+def get_sentence_mentions(mentions):
+
+    sentenceMentions = defaultdict(list)
+
+    for mid, mention in mentions.items():
+        snr = mention.get_sentence_number()
+        sentenceMentions[snr].append(mid)
+
+    return sentenceMentions
+
+
+
+def add_coref_prohibitions(mentions, coref_classes):
+
+    sentenceMentions = get_sentence_mentions(mentions)
+    for snr, mids in sentenceMentions.items():
+        for mid in mids:
+            mention = mentions.get(mid)
+            corefs = []
+            for c_class in mention.in_coref_class:
+                corefs += coref_classes.get(c_class)
+            for same_sent_mid in mids:
+                if not same_sent_mid == mid and not same_sent_mid in corefs:
+                    mention.coreference_prohibited.append(same_sent_mid)
+
+
+
+
 def apply_precise_constructs(mentions, coref_classes):
     '''
     Function that moderates the precise constructs (calling one after the other
@@ -331,6 +384,7 @@ def apply_precise_constructs(mentions, coref_classes):
     identify_predicative_structures(mentions, coref_classes)
     resolve_relative_pronoun_structures(mentions, coref_classes)
     identify_acronyms_or_alternative_names(mentions, coref_classes)
+    resolve_reflective_pronoun_structures(mentions, coref_classes)
     #f. Demonym Israel, Israeli (later)
 
 
@@ -607,6 +661,7 @@ def resolve_coreference(nafin):
     update_mentions(mentions, coref_classes)
 
     #sieve 10
+    add_coref_prohibitions(mentions, coref_classes)
     resolve_pronoun_coreference(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
