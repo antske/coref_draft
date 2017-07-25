@@ -1,0 +1,1 @@
+from .resolve_coreference import process_coreference

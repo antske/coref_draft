@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 
-with open('README.rst') as f:
+with open('README.md') as f:
     readme = f.read()
 
 with open('LICENSE') as f:
@@ -18,6 +18,9 @@ setup(
     author_email='antske.fokkens@vu.nl',
     url='https://github.com/antske/coref_draft/',
     license=license,
-    packages=find_packages(exclude=('tests', 'docs'))
+    packages=find_packages(exclude=('tests', 'docs')),
+    install_requires = [
+        "KafNafParserPy>=1.88",
+    ]
 )
 
