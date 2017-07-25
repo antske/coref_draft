@@ -281,6 +281,18 @@ def identify_predicative_structures(mentions, coref_classes):
                     update_matching_mentions(mentions, matching_mentions, mention, coref_classes)
 
 
+def get_closest_match_relative_pronoun(mentions, matching, mention_index):
+
+    candidates = {}
+    for mid in matching:
+        mention = mentions.get(mid)
+        offset = mention.head_id
+        candidates[mention] = offset
+    antecedent = identify_closest_candidate(mention_index, candidates)
+    return antecedent
+
+
+
 def resolve_relative_pronoun_structures(mentions, coref_classes):
     '''
     Identifies relative pronouns and assigns them to the class of the noun they're modifying
@@ -296,8 +308,12 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
                     for mod in othermention.get_modifiers():
                         if mention.head_id in mod:
                             matching.append(om)
-            if len(matching) > 0:
+            if len(matching) == 1:
                 update_matching_mentions(mentions, matching, mention, coref_classes)
+            elif len(matching) > 1:
+                mention_index = mention.head_id
+                my_match = get_closest_match_relative_pronoun(mentions, matching, mention_index)
+                update_matching_mentions(mentions, [my_match.id], mention, coref_classes)
 
 def resolve_reflective_pronoun_structures(mentions, coref_classes):
     '''
@@ -318,8 +334,9 @@ def resolve_reflective_pronoun_structures(mentions, coref_classes):
             if len(matching) == 1:
                 update_matching_mentions(mentions, matching, mention, coref_classes)
             elif len(matching) > 1:
-                mymatch = sorted(matching)[-1]
-                update_matching_mentions(mentions, [mymatch], mention, coref_classes)
+                mention_index = mention.head_id
+                my_match = get_closest_match_relative_pronoun(mentions, matching, mention_index)
+                update_matching_mentions(mentions, [my_match.id], mention, coref_classes)
 
 
 
@@ -586,10 +603,9 @@ def get_candidates_and_distance(mention, mentions):
     return candidates
 
 
-def identify_antecedent(mention, mentions):
+def identify_closest_candidate(mention_index, candidates):
 
-    candidates = get_candidates_and_distance(mention, mentions)
-    mention_index = mention.head_id
+
     distance = 1000000
     antecedent = None
     for candidate, head_index in candidates.items():
@@ -597,6 +613,14 @@ def identify_antecedent(mention, mentions):
         if candidate_distance < distance:
             distance = candidate_distance
             antecedent = candidate
+    return antecedent
+
+
+def identify_antecedent(mention, mentions):
+
+    candidates = get_candidates_and_distance(mention, mentions)
+    mention_index = mention.head_id
+    antecedent = identify_closest_candidate(mention_index, candidates)
 
     return antecedent
 
