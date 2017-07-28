@@ -17,7 +17,23 @@ Future plans:
 - separate Alpino specific functions from general naf-extraction functions (extend to other languages)
 - create library for English
 
+Usage
+----
 
+From command line:
+
+```{bash}
+$ python multisieve_coreference < inputfile.naf
+```
+
+From python:
+
+```{python}
+from multisieve_coreference import process_coreference
+process_coreference(naf_object)
+```
+
+Calling `process_coreference` will change the naf_object in-place by adding coref nodes (if any).
 
 Contact
 ------
