@@ -1320,7 +1320,7 @@ def create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qu
 def initiate_stopword_list(lang='nl'):
 
     global stop_words
-    resources = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
+    resources = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources"))
     
     stopfile = open(os.path.join(resources, lang, 'stop_words.txt'),'r')
     for line in stopfile:
