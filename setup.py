@@ -20,8 +20,8 @@ setup(
     license=license,
     packages=find_packages(exclude=('tests', 'docs')),
     package_data={'multisieve_coreference': ['resources/*/*']},
-    install_requires = [
+    data_files=[('', ['LICENSE'])],
+    install_requires=[
         "KafNafParserPy>=1.88",
     ]
 )
-
