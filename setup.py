@@ -10,7 +10,7 @@ with open('LICENSE') as f:
     license = f.read()
 
 setup(
-    name='coref_draft',
+    name='multisieve_coreference',
     version='0.1.1',
     description='Basic coreference resolution module, based on multi-seive',
     long_description=readme,
