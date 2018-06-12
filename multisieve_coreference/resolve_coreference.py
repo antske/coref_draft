@@ -1,7 +1,11 @@
 import sys
+import logging
 from KafNafParserPy import *
 from collections import defaultdict
 from .naf_info import get_mentions, add_coreference_to_naf, identify_direct_quotations, initiate_id2string_dicts
+
+
+logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 
 #global values mapping identifiers to string and lemma respectively
@@ -705,8 +709,19 @@ def process_coreference(nafin):
 
 def main(argv=None):
     #args and options left for later
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument('-l', '--level', help="Logging level",
+                        default='WARNING')
+    log_level = parser.parse_args().level
+    logging.basicConfig(level=log_level)
+
+    logger.debug("Reading...")
     nafin = KafNafParser(sys.stdin)
+    logger.debug("Processing...")
     nafin = process_coreference(nafin)
+    logger.debug("Writing...")
     nafin.dump()
 
 if __name__ == '__main__':
