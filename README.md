@@ -44,6 +44,10 @@ Contact
 * http://antskefokkens.info
 * Vrije University of Amsterdam
 
+Issues
+------
+ - [ ] `global stop_words` should be a `set`
+
 License
 ------
 Sofware distributed under Apache License v2.0, see LICENSE file for details.
