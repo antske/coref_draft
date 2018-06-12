@@ -578,12 +578,10 @@ def get_mentions(nafobj):
 
 
 def get_span_in_offsets(nafobj, span):
-
-    offset_span = []
-    for tid in span:
-        toffset = get_offset(nafobj, tid)
-        offset_span.append(toffset)
-    return offset_span
+    return [
+        get_offset(nafobj, tid)
+        for tid in span
+    ]
 
 
 def get_quotation_spans(nafobj):
