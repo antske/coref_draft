@@ -279,7 +279,7 @@ def add_non_stopwords(nafobj, span, mention):
         if not my_term.get_type() == 'closed' and not my_term.get_lemma().lower() in stop_words:
             non_stop_terms.append(tid)
 
-    non_stop_span = get_span_in_offsets(nafobj, non_stop_terms)
+    non_stop_span = convert_term_ids_to_offsets(nafobj, non_stop_terms)
     mention.set_no_stop_words(non_stop_span)
 
 def add_main_modifiers(nafobj, span, mention):
@@ -297,7 +297,7 @@ def add_main_modifiers(nafobj, span, mention):
         if term.get_pos() in ['adj','noun']:
             main_mods.append(tid)
 
-    main_mods_offset = get_span_in_offsets(nafobj, main_mods)
+    main_mods_offset = convert_term_ids_to_offsets(nafobj, main_mods)
     mention.set_main_modifiers(main_mods_offset)
 
 
@@ -329,7 +329,7 @@ def create_mention(nafobj, constituentInfo, head, mid):
         head_id = get_offset(nafobj, head)
 
     span = constituentInfo.get_span()
-    offset_ids_span = get_span_in_offsets(nafobj, span)
+    offset_ids_span = convert_term_ids_to_offsets(nafobj, span)
     mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
     sentence_number = get_sentence_number(nafobj, head)
     mention.set_sentence_number(sentence_number)
@@ -338,18 +338,18 @@ def create_mention(nafobj, constituentInfo, head, mid):
     add_main_modifiers(nafobj, span, mention)
     #mwe info
     full_head_tids = constituentInfo.get_multiword()
-    full_head_span = get_span_in_offsets(nafobj, full_head_tids)
+    full_head_span = convert_term_ids_to_offsets(nafobj, full_head_tids)
     mention.set_full_head(full_head_span)
     #modifers and appositives:
     relaxed_span = offset_ids_span
     for mod_in_tids in constituentInfo.get_modifiers():
-        mod_span = get_span_in_offsets(nafobj, mod_in_tids)
+        mod_span = convert_term_ids_to_offsets(nafobj, mod_in_tids)
         mention.add_modifier(mod_span)
         for mid in mod_span:
             if mid > head_id and mid in relaxed_span:
                 relaxed_span.remove(mid)
     for app_in_tids in constituentInfo.get_appositives():
-        app_span = get_span_in_offsets(nafobj, app_in_tids)
+        app_span = convert_term_ids_to_offsets(nafobj, app_in_tids)
         mention.add_appositive(app_span)
         for mid in app_span:
             if mid > head_id and mid in relaxed_span:
@@ -357,7 +357,7 @@ def create_mention(nafobj, constituentInfo, head, mid):
     mention.set_relaxed_span(relaxed_span)
 
     for pred_in_tids in constituentInfo.get_predicatives():
-        pred_span = get_span_in_offsets(nafobj, pred_in_tids)
+        pred_span = convert_term_ids_to_offsets(nafobj, pred_in_tids)
         mention.add_predicative(pred_span)
 
     #set sequence of pos FIXME: if not needed till end; remove
@@ -577,7 +577,7 @@ def get_mentions(nafobj):
     return mentions
 
 
-def get_span_in_offsets(nafobj, seq):
+def convert_term_ids_to_offsets(nafobj, seq):
     '''
     Convert a sequence of term IDs to a list of offsets
     :param nafobj:  input naf object
@@ -729,13 +729,13 @@ def identify_direct_links_to_sip(nafobj, quotation):
                 if not head_term is None:
                     speaker, addressee, topic = analyze_head_relations(nafobj, head_term, head2deps)
                     if not speaker is None:
-                        speaker_in_offsets = get_span_in_offsets(nafobj, speaker)
+                        speaker_in_offsets = convert_term_ids_to_offsets(nafobj, speaker)
                         quotation.source = speaker_in_offsets
                     if not addressee is None:
-                        addressee_in_offsets = get_span_in_offsets(nafobj, addressee)
+                        addressee_in_offsets = convert_term_ids_to_offsets(nafobj, addressee)
                         quotation.addressee = addressee_in_offsets
                     if not topic is None:
-                        topic_in_offsets = get_span_in_offsets(nafobj, topic)
+                        topic_in_offsets = convert_term_ids_to_offsets(nafobj, topic)
                         quotation.topic = topic_in_offsets
 
 
@@ -840,12 +840,12 @@ def identify_addressee_or_topic_relations(nafobj, tid, quotation):
             headterm = nafobj.get_term(headrel[0])
             if headterm.get_lemma() == 'tegen' or headrel[1] == 'hd/obj2':
                 myconstituent = get_constituent(headterm.get_id())
-                addressee = get_span_in_offsets(nafobj, myconstituent)
+                addressee = convert_term_ids_to_offsets(nafobj, myconstituent)
                 quotation.addressee = addressee
                 return True
             elif headterm.get_lemma() == 'over':
                 myconstituent = get_constituent(headterm.get_id())
-                topic = get_span_in_offsets(nafobj, myconstituent)
+                topic = convert_term_ids_to_offsets(nafobj, myconstituent)
                 quotation.topic = topic
                 return True
     return False
@@ -921,11 +921,11 @@ def find_name_or_pronoun(nafobj, preceding_terms, quotation):
         if len(remaining_candidates) > 0:
             candidates = extract_full_names_or_prons(nafobj, remaining_candidates)
             if len(candidates) == 1:
-                candidate_in_offsets = get_span_in_offsets(nafobj, candidates[0])
+                candidate_in_offsets = convert_term_ids_to_offsets(nafobj, candidates[0])
                 quotation.source = candidate_in_offsets
             else:
                 candidate = identify_primary_candidate(candidates)
-                candidate_in_offsets = get_span_in_offsets(nafobj, candidate)
+                candidate_in_offsets = convert_term_ids_to_offsets(nafobj, candidate)
                 quotation.source = candidate_in_offsets
 
 
@@ -1003,7 +1003,7 @@ def identify_source_introducing_constructions(nafobj, quotation, sentence_to_ter
 
     if source_head is not None:
         source_constituent = get_constituent(source_head)
-        source_in_offsets = get_span_in_offsets(nafobj, source_constituent)
+        source_in_offsets = convert_term_ids_to_offsets(nafobj, source_constituent)
         quotation.source = source_in_offsets
     else:
         find_name_or_pronoun(nafobj, preceding_terms, quotation)
@@ -1099,7 +1099,7 @@ def create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qu
 
     myQuote = Cquotation(quote_id)
 
-    quotespan = get_span_in_offsets(nafobj, nafquotation.span)
+    quotespan = convert_term_ids_to_offsets(nafobj, nafquotation.span)
     myQuote.set_span(quotespan)
 
     quotestring = get_string_of_span(nafobj, nafquotation.span)
