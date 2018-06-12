@@ -1,8 +1,15 @@
 import sys
 import logging
-from KafNafParserPy import *
 from collections import defaultdict
-from .naf_info import get_mentions, add_coreference_to_naf, identify_direct_quotations, initiate_id2string_dicts
+
+from KafNafParserPy import KafNafParser
+
+from .dump import add_coreference_to_naf
+from .naf_info import (
+    get_mentions,
+    identify_direct_quotations,
+    initiate_id2string_dicts
+)
 
 
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
