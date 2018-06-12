@@ -1050,7 +1050,7 @@ def identify_direct_quotations(nafobj, mentions):
     '''
 
     nafquotations = get_quotation_spans(nafobj)
-    create_headdep_dicts(nafobj)
+    # create_headdep_dicts(nafobj)
     toremove = []
     for quotation in nafquotations:
         identify_direct_links_to_sip(nafobj, quotation)
