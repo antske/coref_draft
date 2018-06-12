@@ -778,9 +778,15 @@ def add_coreference_to_naf(nafobj, corefclasses, mentions):
                 start_count += 1
                 nafCoref.set_id(cid)
                 nafCoref.set_type('entity')
-                for mid in mids:
-                    mention = mentions.get(mid)
-                    term_id_span, head_id = get_terms_from_offsets(nafobj,mention.span,mention.head_id)
+                data = sorted(
+                    get_terms_from_offsets(
+                        nafobj,
+                        mention.span,
+                        mention.head_id
+                    )
+                    for mention in map(mentions.get, mids)
+                )
+                for term_id_span, head_id in data:
                     coref_span = create_span(term_id_span, head_id)
                     nafCoref.add_span_object(coref_span)
                 nafobj.add_coreference(nafCoref)
