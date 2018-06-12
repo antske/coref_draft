@@ -153,12 +153,14 @@ def get_named_entities(nafobj):
     return entities
 
 
-
 def get_mention_spans(nafobj):
     '''
-    Function explores various layers of nafobj and retrieves all mentions possibly referring to an entity
-    :param nafobj: input nafobj
-    :return: dictionary of head term with as value constituent object (head id full head, modifiers, complete constituent0
+    Function explores various layers of nafobj and retrieves all mentions
+    possibly referring to an entity
+
+    :param nafobj:  input nafobj
+    :return:        dictionary of head term with as value constituent object
+                    (head id, full head, modifiers, complete constituent)
     '''
     mention_heads = get_relevant_head_ids(nafobj)
     mention_constituents = get_constituents(nafobj, mention_heads)
