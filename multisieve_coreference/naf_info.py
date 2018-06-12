@@ -1,7 +1,10 @@
-from KafNafParserPy import *
-from .mention_data import *
-from collections import defaultdict
 import os
+from collections import defaultdict
+
+from KafNafParserPy import Cspan, Ctarget, Ccoreference
+
+from .mention_data import Cmention, Cquotation
+
 
 dep_extractor = None
 head2deps = defaultdict(list)
