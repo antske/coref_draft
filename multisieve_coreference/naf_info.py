@@ -43,14 +43,14 @@ class Cconstituent_information:
     This class contains the main constructional information of mentions
     '''
 
-    def __init__(self, head_id, span = []):
+    def __init__(self, head_id, span=None):
         '''
         Constructor for the constituent object
         :param head_id: term id of the head of the constituent
         :param span: list of term ids providing full span of hte constituent
         '''
         self.head_id = head_id
-        self.span = span
+        self.span = span if span is not None else []
         self.multiword = []
         self.modifiers = []
         self.appositives = []
