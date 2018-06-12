@@ -492,14 +492,10 @@ def get_offset(nafobj, term_id):
     :return:
     '''
 
-    my_term = nafobj.get_term(term_id)
-    offsets = []
-    for wid in my_term.get_span().get_span_ids():
-        my_token = nafobj.get_token(wid)
-        offsets.append(int(my_token.get_offset()))
-
-    term_offset = sorted(offsets)[0]
-    return term_offset
+    return min(
+        int(nafobj.get_token(wid).get_offset())
+        for wid in nafobj.get_term(term_id).get_span_ids()
+    )
 
 
 def get_mwe_and_modifiers_and_appositives(head_id):
