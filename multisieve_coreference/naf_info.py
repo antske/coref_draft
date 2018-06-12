@@ -577,10 +577,17 @@ def get_mentions(nafobj):
     return mentions
 
 
-def get_span_in_offsets(nafobj, span):
+def get_span_in_offsets(nafobj, seq):
+    '''
+    Convert a sequence of term IDs to a list of offsets
+    :param nafobj:  input naf object
+    :param seq:     sequence of term IDs
+    :return:        a list of offsets
+    '''
+
     return [
         get_offset(nafobj, tid)
-        for tid in span
+        for tid in seq
     ]
 
 
