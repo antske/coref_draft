@@ -215,11 +215,11 @@ class Cmentions:
     This class covers information about the collection of coreference mentions as a whole
     '''
 
-    def __init__(self, mentions = [], final_id='m0'):
+    def __init__(self, mentions=None, final_id='m0'):
         '''
         Constructor for mentions object
         '''
-        self.mentions = mentions
+        self.mentions = mentions if mentions is not None else []
         self.final_id = final_id
 
 
