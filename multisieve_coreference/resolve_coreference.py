@@ -661,41 +661,41 @@ def resolve_coreference(nafin):
     mentions = get_mentions(nafin)
     quotations = identify_direct_quotations(nafin, mentions)
 
-    #sieve 1: Speaker Identification
+    logger.info("Sieve 1: Speaker Identification")
     coref_classes = direct_speech_interpretation(quotations, mentions)
     update_mentions(mentions, coref_classes)
 
-    #sieve 2: String Match
+    logger.info("Sieve 2: String Match")
     match_full_name_overlap(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
-    #sieve 3: Relaxed String Match
+    logger.info("Sieve 3: Relaxed String Match")
     match_relaxed_string(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
-    #sieve 4: Precise constructs
+    logger.info("Sieve 4: Precise constructs")
     apply_precise_constructs(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
-    #sieve 5-7: Strict Head Match
+    logger.info("Sieve 5-7: Strict Head Match")
     apply_strict_head_match(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
-    #sieve 8: Proper Head Word Match
+    logger.info("Sieve 8: Proper Head Word Match")
     apply_proper_head_word_match(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
-    #sieve 9: Relaxed Head Match
+    logger.info("Sieve 9: Relaxed Head Match")
     apply_relaxed_head_match(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
-    #sieve 10
+    logger.info("Sieve 10")
     add_coref_prohibitions(mentions, coref_classes)
     resolve_pronoun_coreference(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
