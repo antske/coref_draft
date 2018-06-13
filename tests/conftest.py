@@ -27,6 +27,12 @@ def naf_string(naf_file):
 
 
 @pytest.fixture
+def naf_object(naf_file):
+    from KafNafParserPy import KafNafParser
+    return KafNafParser(naf_file)
+
+
+@pytest.fixture
 def temp_file():
     import tempfile
     return tempfile.mktemp()
