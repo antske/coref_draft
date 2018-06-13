@@ -401,8 +401,6 @@ def create_mention(nafobj, constituentInfo, head, mid):
     return mention
 
 
-
-
 def merge_two_mentions(mention1, mention2):
     '''
     Merge information from mention 1 into mention 2
@@ -410,14 +408,16 @@ def merge_two_mentions(mention1, mention2):
     :param mention2:
     :return: updated mention
     '''
-
+    # FIXME; The comments here do not correspond to the code and therefore the
+    #        code may be horribly wrong.
     if mention1.head_id == mention2.head_id:
         if set(mention1.span) == set(mention2.span):
-            #if mention1 does not have entity type, take the one from entity 2
+            # if mention1 does not have entity type, take the one from entity 2
             if mention2.get_entity_type() is None:
                 mention2.set_entity_type(mention1.get_entity_type())
         else:
-            #if mention2 has no entity type, it's span is syntax based (rather than from the NERC module)
+            # if mention2 has no entity type, it's span is syntax based
+            # (rather than from the NERC module)
             if mention1.get_entity_type() is None:
                 mention2.set_span(mention1.get_span())
     else:
@@ -427,7 +427,6 @@ def merge_two_mentions(mention1, mention2):
             mention2.set_entity_type(mention1.get_entity_type())
 
     return mention2
-
 
 
 def merge_mentions(mentions, heads):
