@@ -4,49 +4,17 @@ from collections import defaultdict
 
 from .mention_data import Cmention, Cquotation
 from .naf_classes import Cconstituent_information, CquotationNaf
+from .constituents import (
+    get_constituent,
+    head2deps,
+    dep2heads,
+    create_headdep_dicts
+)
 
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 
-head2constituent = dict()
-head2deps = dict()
-dep2heads = dict()
 stop_words = []
-
-
-def get_constituent(head):
-    """
-    Get all the terms in the constituent of which `head` is the head.
-    """
-    global head2constituent
-    try:
-        return head2constituent[head]
-    except KeyError:
-        return recursively_get_constituent(head, set())
-
-
-def recursively_get_constituent(head, parents):
-    """
-    Calculate the constituent if it is not in the cache
-
-    :param head:        head to find constituent of
-    :param parents:     term IDs that are already being calculated, thus should
-                        not be recursed into
-    :return:            set of term IDs that are in the constituent of `head`
-    """
-    global head2constituent, head2deps
-    logger.debug("Head: {}".format(head))
-    if head in parents:
-        return set()
-    elif head in head2constituent:
-        return head2constituent[head]
-    # Recursively find all terms dependent on this head
-    deps = {head}.union(*(
-        recursively_get_constituent(term_id, parents | {term_id})
-        for term_id, _ in head2deps.get(head, [])
-    ))
-    head2constituent[head] = deps
-    return deps
 
 
 def get_relevant_head_ids(nafobj):
@@ -528,8 +496,6 @@ def get_mwe_and_modifiers_and_appositives(head_id):
     :return: list of full head terms, list of posthead modifiers
     '''
 
-    global head2deps, dep2heads
-
     mwe = [head_id]
     mods = []
     apps = []
@@ -555,8 +521,6 @@ def add_predicative_information(head_id, myConstituent):
     :param myConstituent: constituent object
     :return:
     '''
-
-    global head2deps, dep2heads
 
     if head_id in dep2heads:
         for headrel in dep2heads.get(head_id):
@@ -657,50 +621,6 @@ def get_quotation_spans(nafobj):
     return quotations
 
 
-def create_headdep_dicts(
-        nafobj,
-        term_filter=lambda naf, t: naf.get_term(t).get_pos() != 'punct'):
-    '''
-    Function that creates dictionaries of dep to heads and head to deps
-    :param nafobj: nafobj from input file
-    :return: None
-    '''
-
-    allhead2deps = defaultdict(list)
-    # To make sure we get a KeyError if something goes (horribly) wrong
-    dep2headIDs = dict()
-    for dep in nafobj.get_dependencies():
-        headID = dep.get_from()
-        toID = dep.get_to()
-        allhead2deps[headID].append((toID, dep.get_function()))
-        dep2headIDs.setdefault(toID, []).append(headID)
-
-    global head2deps
-    for headID, deps in allhead2deps.items():
-        # I don't have to do something with the deps that are filtered out,
-        # because if they are leaves they can just be deleted and if they
-        # aren't leaves they will also appear as headID and handled there.
-        deps = {
-            (toID, relation)
-            for toID, relation in deps
-            if term_filter(nafobj, toID)
-        }
-        if term_filter(nafobj, headID):
-            head2deps.setdefault(headID, set()).update(deps)
-        else:
-            # Delete the head by adding its dependents to the heads of the
-            # head.
-            for super_headID in dep2headIDs[headID]:
-                if term_filter(nafobj, super_headID):
-                    head2deps.setdefault(super_headID, set()).update(deps)
-
-    # Create the reverse too
-    global dep2heads
-    for headID, deps in head2deps.items():
-        for toID, relation in deps:
-            dep2heads.setdefault(toID, set()).add((headID, relation))
-
-
 def create_set_of_tids_from_tidfunction(tidfunctionlist):
 
     tids = set()
@@ -765,8 +685,6 @@ def identify_direct_links_to_sip(nafobj, quotation):
     :return: boolean indicating whether source was found
     '''
 
-    global head2deps
-
     for tid in quotation.span:
         deps = head2deps.get(tid)
         if not deps is None:
@@ -790,8 +708,6 @@ def identify_direct_links_to_sip(nafobj, quotation):
 
 
 def check_if_quotation_contains_dependent(quotation):
-
-    global dep2heads
     #FIXME: verify on larger set of development corpus whether this behavior is correct
     for tid in quotation.span:
         heads = dep2heads.get(tid)
@@ -847,9 +763,6 @@ def get_previous_and_next_sentence(sentences):
     return previous_sentence, following_sentence
 
 def retrieve_sentence_preceding_sip(nafobj, terms):
-
-    global head2deps
-
     source_head = None
     for tid in terms:
         myterm = nafobj.get_term(tid)
@@ -864,8 +777,6 @@ def retrieve_sentence_preceding_sip(nafobj, terms):
 
 
 def retrieve_quotation_following_sip(nafobj, terms):
-
-    global head2deps
 
     source_head = None
     for tid in terms:
@@ -882,7 +793,6 @@ def retrieve_quotation_following_sip(nafobj, terms):
 
 def identify_addressee_or_topic_relations(nafobj, tid, quotation):
 
-    global dep2heads
     #FIXME: language specific function
     heads = dep2heads.get(tid)
     if heads is not None:
@@ -941,8 +851,6 @@ def get_closest(candidates):
     return selected_cand
 
 def identify_primary_candidate(candidates):
-
-    global dep2heads
 
     for cand in candidates:
         for tid in cand:
