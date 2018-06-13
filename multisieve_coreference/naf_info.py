@@ -166,7 +166,7 @@ def get_named_entities(nafobj):
             add_predicative_information(head_term, myConstituent)
             if verify_span_uniqueness(found_spans, espan):
 
-                if not head_term in entities:
+                if head_term not in entities:
                     entities[head_term] = myConstituent
                 else:
                     entities[head_term + 'b'] = myConstituent
