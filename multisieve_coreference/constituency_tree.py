@@ -1,6 +1,6 @@
 class ConstituencyTree:
     """
-    Groups together information from a constituency tree and exposes convenient
+    Group together information from a constituency tree and expose convenient
     lookups.
     """
     def __init__(self, nafobj, item_filter):
