@@ -47,6 +47,7 @@ Contact
 Issues
 ------
  - [ ] `global stop_words` should be a `set`
+ - [ ] `linguisticProcessors` layer should be added to `nafHeader`
 
 License
 ------
