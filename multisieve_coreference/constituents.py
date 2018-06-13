@@ -34,11 +34,16 @@ def recursively_get_constituent(head, parents):
         return set()
     elif head in head2constituent:
         return head2constituent[head]
-    # Recursively find all terms dependent on this head
-    deps = {head}.union(*(
+    # Base case: direct dependents
+    deps = {term_id for term_id, _ in head2deps.get(head, [])}
+    # Recursive step: call _get_constituent for every direct dependent
+    deps.union(*(
         recursively_get_constituent(term_id, parents | {term_id})
-        for term_id, _ in head2deps.get(head, [])
+        for term_id in deps
     ))
+    # Make sure head itself is in it
+    deps.add(head)
+    # Cache
     head2constituent[head] = deps
     return deps
 
