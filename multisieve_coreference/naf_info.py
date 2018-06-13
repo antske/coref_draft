@@ -3,7 +3,8 @@ import logging
 from collections import defaultdict
 
 from .mention_data import Cmention, Cquotation
-from .naf_classes import Cconstituent_information, CquotationNaf
+from .naf_classes import Cconstituent_information
+from .quotation_naf import CquotationNaf
 from .constituents import (
     get_constituent,
     head2deps,
