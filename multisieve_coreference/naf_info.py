@@ -215,7 +215,7 @@ def create_mention(nafobj, constituentInfo, head, mid):
     else:
         head_id = get_offset(nafobj, head)
 
-    span = constituentInfo.get_span()
+    span = constituentInfo.span
     offset_ids_span = convert_term_ids_to_offsets(nafobj, span)
     mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
     sentence_number = get_sentence_number(nafobj, head)
@@ -224,18 +224,18 @@ def create_mention(nafobj, constituentInfo, head, mid):
     add_non_stopwords(nafobj, span, mention)
     add_main_modifiers(nafobj, span, mention)
     #mwe info
-    full_head_tids = constituentInfo.get_multiword()
+    full_head_tids = constituentInfo.multiword
     full_head_span = convert_term_ids_to_offsets(nafobj, full_head_tids)
     mention.set_full_head(full_head_span)
     #modifers and appositives:
     relaxed_span = offset_ids_span
-    for mod_in_tids in constituentInfo.get_modifiers():
+    for mod_in_tids in constituentInfo.modifiers:
         mod_span = convert_term_ids_to_offsets(nafobj, mod_in_tids)
         mention.add_modifier(mod_span)
         for mid in mod_span:
             if mid > head_id and mid in relaxed_span:
                 relaxed_span.remove(mid)
-    for app_in_tids in constituentInfo.get_appositives():
+    for app_in_tids in constituentInfo.appositives:
         app_span = convert_term_ids_to_offsets(nafobj, app_in_tids)
         mention.add_appositive(app_span)
         for mid in app_span:
@@ -243,7 +243,7 @@ def create_mention(nafobj, constituentInfo, head, mid):
                 relaxed_span.remove(mid)
     mention.set_relaxed_span(relaxed_span)
 
-    for pred_in_tids in constituentInfo.get_predicatives():
+    for pred_in_tids in constituentInfo.predicatives:
         pred_span = convert_term_ids_to_offsets(nafobj, pred_in_tids)
         mention.add_predicative(pred_span)
 
@@ -407,7 +407,7 @@ def get_mentions(nafobj):
     for entity, constituent in entities.items():
         mid = 'm' + str(len(mentions))
         mention = create_mention(nafobj, constituent, entity, mid)
-        mention.set_entity_type(constituent.get_etype())
+        mention.set_entity_type(constituent.etype)
         mentions[mid] = mention
         heads[entity].append(mid)
 
