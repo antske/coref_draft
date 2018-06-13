@@ -696,8 +696,13 @@ def resolve_coreference(nafin):
     update_mentions(mentions, coref_classes)
 
     logger.info("Sieve 10")
+
+    logger.info("Add coreferences prohibitions")
     add_coref_prohibitions(mentions, coref_classes)
+
+    logger.info("Resolve relative pronoun coreferences")
     resolve_pronoun_coreference(mentions, coref_classes)
+
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
