@@ -48,7 +48,7 @@ def get_mention_spans(nafobj):
                     (head id, full head, modifiers, complete constituent)
     '''
     mention_heads = get_relevant_head_ids(nafobj)
-    mention_constituents = get_constituents(nafobj, mention_heads)
+    mention_constituents = get_constituents(mention_heads)
     return mention_constituents
 
 
