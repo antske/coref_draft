@@ -251,7 +251,7 @@ def create_mention(nafobj, constituentInfo, head, mid):
     #os_seq = get_pos_of_span(nafobj, span)
     #mention.set_pos_seq(pos_seq)
     #set pos of head
-    if head != None:
+    if head is not None:
         head_pos = get_pos_of_term(nafobj, head)
         mention.set_head_pos(head_pos)
         if head_pos in ['pron','noun','name']:
