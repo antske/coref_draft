@@ -944,10 +944,9 @@ def create_ordered_number_span(term_list):
 
     return sorted(number_list)
 
+
 def get_preceding_terms_in_sentence(first_sentence, quotation_span):
-
-
-    #FIXME; move to offset based ids earlier; then this hack is not necessary
+    # FIXME; move to offset based ids earlier; then this hack is not necessary
     quotation_numbers = create_ordered_number_span(quotation_span)
     preceeding_terms = []
     if len(quotation_numbers) > 0:
@@ -962,9 +961,10 @@ def get_preceding_terms_in_sentence(first_sentence, quotation_span):
                     preceeding_terms.append(tid)
     return preceeding_terms
 
+
 def get_following_terms_in_sentence(last_sentence, quotation_span):
 
-    #FIXME; move to offset based ids earlier; then this hack is not necessary
+    # FIXME; move to offset based ids earlier; then this hack is not necessary
     quotation_numbers = create_ordered_number_span(quotation_span)
     following_terms = []
     for tid in last_sentence:
