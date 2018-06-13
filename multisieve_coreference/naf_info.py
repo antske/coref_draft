@@ -9,8 +9,8 @@ logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 
 head2constituent = dict()
-head2deps = defaultdict(list)
-dep2heads = defaultdict(list)
+head2deps = dict()
+dep2heads = dict()
 stop_words = []
 
 
@@ -658,23 +658,49 @@ def get_quotation_spans(nafobj):
     return quotations
 
 
-
-def create_headdep_dicts(nafobj):
+def create_headdep_dicts(
+        nafobj,
+        term_filter=lambda naf, t: naf.get_term(t).get_pos() != 'punct'):
     '''
     Function that creates dictionaries of dep to heads and head to deps
     :param nafobj: nafobj from input file
     :return: None
     '''
 
-    global head2deps, dep2heads
-
-
+    allhead2deps = defaultdict(list)
+    # To make sure we get a KeyError if something goes (horribly) wrong
+    dep2headIDs = dict()
     for dep in nafobj.get_dependencies():
-        head = dep.get_from()
-        mydep = dep.get_to()
-        relation = dep.get_function()
-        dep2heads[mydep].append([head, relation])
-        head2deps[head].append([mydep, relation])
+        headID = dep.get_from()
+        toID = dep.get_to()
+        allhead2deps[headID].append((toID, dep.get_function()))
+        dep2headIDs.setdefault(toID, []).append(headID)
+
+    global head2deps
+    for headID, deps in allhead2deps.items():
+        # I don't have to do something with the deps that are filtered out,
+        # because if they are leaves they can just be deleted and if they
+        # aren't leaves they will also appear as headID and handled there.
+        deps = {
+            (toID, relation)
+            for toID, relation in deps
+            if term_filter(nafobj, toID)
+        }
+        if term_filter(nafobj, headID):
+            head2deps.setdefault(headID, set()).update(deps)
+        else:
+            # Delete the head by adding its dependents to the heads of the
+            # head.
+            for super_headID in dep2headIDs[headID]:
+                if term_filter(nafobj, super_headID):
+                    head2deps.setdefault(super_headID, set()).update(deps)
+
+    # Create the reverse too
+    global dep2heads
+    for headID, deps in head2deps.items():
+        for toID, relation in deps:
+            dep2heads.setdefault(toID, set()).add((headID, relation))
+
 
 def create_set_of_tids_from_tidfunction(tidfunctionlist):
 
