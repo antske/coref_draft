@@ -2,32 +2,37 @@ from collections import defaultdict
 from .constituents import get_constituent, head2deps, dep2heads
 
 
-class Cconstituent_information:
+class Constituent:
     '''
     This class contains the main constructional information of mentions
     '''
 
-    def __init__(self, head_id, span=None):
+    def __init__(self, head_id, span=None, multiword=None, modifiers=None,
+                 appositives=None, predicatives=None, etype=''):
         '''
         Constructor for the constituent object
-        :param head_id: term id of the head of the constituent
-        :param span: list of term ids providing full span of hte constituent
         '''
         self.head_id = head_id
-        self.span = span if span is not None else []
-        self.multiword = []
-        self.modifiers = []
-        self.appositives = []
-        self.predicatives = []
-        self.etype = ''
+        self.span = get_constituent(head_id) if span is None else span
 
-    def set_span(self, span):
+        if multiword is None or modifiers is None or appositives is None:
+            self.multiword, self.modifiers, self.appositives = \
+                get_mwe_and_modifiers_and_appositives(self.head_id)
 
-        self.span = span
+        if multiword is not None:
+            self.multiword = multiword
+        if modifiers is not None:
+            self.modifiers = modifiers
+        if appositives is not None:
+            self.appositives = appositives
 
-    def get_span(self):
+        if predicatives is None:
+            self.predicatives = []
+            self._add_predicative_information()
+        else:
+            self.predicatives = predicatives
 
-        return self.span
+        self.etype = etype
 
     def set_multiword(self, mw):
 
@@ -81,6 +86,23 @@ class Cconstituent_information:
 
         return self.etype
 
+    def _add_predicative_information(self):
+        '''
+        Function that checks if mention is subject in a predicative structure
+        and, if so, adds predicative info to constituent object
+        :param head_id: identifier of the head of the mention
+        :param myConstituent: constituent object
+        :return:
+        '''
+
+        for headID, headrel in dep2heads.get(self.head_id, []):
+            if headrel == 'hd/su':
+                headscomps = head2deps.get(headID)
+                for depID, deprel in headscomps:
+                    if deprel in ['hd/predc', 'hd/predm']:
+                        predicative = get_constituent(depID)
+                        self.add_predicative(predicative)
+
 
 def get_mwe_and_modifiers_and_appositives(head_id):
     '''
@@ -107,37 +129,7 @@ def get_mwe_and_modifiers_and_appositives(head_id):
 
 
 def get_constituents(mention_heads):
-
-    constituents = {}
-    for head in mention_heads:
-        mydeps = get_constituent(head)
-        myConstituent = Cconstituent_information(head, mydeps)
-        mwe, mods, apps = get_mwe_and_modifiers_and_appositives(head)
-        myConstituent.set_multiword(mwe)
-        myConstituent.set_modifiers(mods)
-        myConstituent.set_appositives(apps)
-        add_predicative_information(head, myConstituent)
-        constituents[head] = myConstituent
-
-    return constituents
-
-
-def add_predicative_information(head_id, myConstituent):
-    '''
-    Function that checks if mention is subject in a predicative structure and,
-    if so, adds predicative info to constituent object
-    :param head_id: identifier of the head of the mention
-    :param myConstituent: constituent object
-    :return:
-    '''
-
-    for headID, headrel in dep2heads.get(head_id, []):
-        if headrel == 'hd/su':
-            headscomps = head2deps.get(headID)
-            for depID, deprel in headscomps:
-                if deprel in ['hd/predc', 'hd/predm']:
-                    predicative = get_constituent(depID)
-                    myConstituent.add_predicative(predicative)
+    return {head: Constituent(head) for head in mention_heads}
 
 
 def get_named_entities(nafobj):
@@ -153,14 +145,11 @@ def get_named_entities(nafobj):
         for ref in entity.get_references():
             espan = ref.get_span().get_span_ids()
             head_term = find_head_in_span(espan)
-            full_span = get_constituent(head_term)
-            myConstituent = Cconstituent_information(head_term, full_span)
-            myConstituent.set_multiword(espan)
-            mwe, mods, apps = get_mwe_and_modifiers_and_appositives(head_term)
-            myConstituent.set_modifiers(mods)
-            myConstituent.set_etype(etype)
-            myConstituent.set_appositives(apps)
-            add_predicative_information(head_term, myConstituent)
+            myConstituent = Constituent(
+                head_term,
+                multiword=espan,
+                etype=etype
+            )
             if verify_span_uniqueness(found_spans, espan):
 
                 if head_term not in entities:
