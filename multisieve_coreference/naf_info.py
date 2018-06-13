@@ -1,25 +1,52 @@
 import os
+import logging
 from collections import defaultdict
-
 
 from .mention_data import Cmention, Cquotation
 from .naf_classes import Cconstituent_information, CquotationNaf
 
+logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
-dep_extractor = None
+
+head2constituent = dict()
 head2deps = defaultdict(list)
 dep2heads = defaultdict(list)
 stop_words = []
 
 
 def get_constituent(head):
+    """
+    Get all the terms in the constituent of which `head` is the head.
+    """
+    global head2constituent
+    try:
+        return head2constituent[head]
+    except KeyError:
+        return recursively_get_constituent(head, set())
 
-    global dep_extractor
 
-    mydeps = dep_extractor.get_full_dependents(head, [])
-    if not head in mydeps:
-        mydeps.append(head)
-    return mydeps
+def recursively_get_constituent(head, parents):
+    """
+    Calculate the constituent if it is not in the cache
+
+    :param head:        head to find constituent of
+    :param parents:     term IDs that are already being calculated, thus should
+                        not be recursed into
+    :return:            set of term IDs that are in the constituent of `head`
+    """
+    global head2constituent, head2deps
+    logger.debug("Head: {}".format(head))
+    if head in parents:
+        return set()
+    elif head in head2constituent:
+        return head2constituent[head]
+    # Recursively find all terms dependent on this head
+    deps = {head}.union(*(
+        recursively_get_constituent(term_id, parents | {term_id})
+        for term_id, _ in head2deps.get(head, [])
+    ))
+    head2constituent[head] = deps
+    return deps
 
 
 def get_relevant_head_ids(nafobj):
@@ -44,11 +71,6 @@ def get_relevant_head_ids(nafobj):
 
 def get_constituents(nafobj, mention_heads):
 
-    global dep_extractor
-
-    #global head2deps & check dependents?
-
-    dep_extractor = nafobj.get_dependency_extractor()
     constituents = {}
     for head in mention_heads:
         mydeps = get_constituent(head)
@@ -61,6 +83,7 @@ def get_constituents(nafobj, mention_heads):
         constituents[head] = myConstituent
 
     return constituents
+
 
 def verify_span_uniqueness(found_spans, span):
     '''
@@ -109,8 +132,7 @@ def find_head_in_span(span):
     head_term = None
     for term in span:
         constituent = get_constituent(term)
-        constituent.append(term)
-        if set(span).issubset(set(constituent)):
+        if set(span) < constituent:
             if head_term is None:
                 head_term = term
        #     else:
