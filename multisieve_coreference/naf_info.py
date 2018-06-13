@@ -662,10 +662,11 @@ def create_set_of_tids_from_tidfunction(tidfunctionlist):
 
     return tids
 
+
 def find_relevant_spans(deps, outside_ids):
 
     for dep in deps:
-        if dep[0] in outside_ids and dep[1] in ['nucl/tag','dp/dp']:
+        if dep[0] in outside_ids and dep[1] in ['nucl/tag', 'dp/dp']:
             return dep[0]
 
     return None
