@@ -48,6 +48,7 @@ Issues
 ------
  - [ ] `global stop_words` should be a `set`
  - [ ] `linguisticProcessors` layer should be added to `nafHeader`
+ - [ ] `create_mention` docstring
 
 License
 ------
