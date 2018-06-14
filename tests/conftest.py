@@ -8,12 +8,19 @@ def resources_dir():
 
 
 @pytest.fixture
-def naf_file(resources_dir):
+def temp_file():
+    import tempfile
+    return tempfile.mktemp()
+
+
+# Example file
+@pytest.fixture
+def example_naf_file(resources_dir):
     return os.path.join(resources_dir, 'example-in.naf')
 
 
 @pytest.fixture
-def naf_example_output(resources_dir):
+def example_naf_output(resources_dir):
     return os.path.join(
         resources_dir,
         'example-out.naf'
@@ -21,18 +28,18 @@ def naf_example_output(resources_dir):
 
 
 @pytest.fixture
-def naf_string(naf_file):
-    with open(naf_file) as fd:
-        return fd.read()
-
-
-@pytest.fixture
-def naf_object(naf_file):
+def example_naf_object(example_naf_file):
     from KafNafParserPy import KafNafParser
-    return KafNafParser(naf_file)
+    return KafNafParser(example_naf_file)
+
+
+# SoNaR file
+@pytest.fixture
+def sonar_naf_file(resources_dir):
+    return os.path.join(resources_dir, 'SoNaR-dpc-bal-001236-nl-sen-in.naf')
 
 
 @pytest.fixture
-def temp_file():
-    import tempfile
-    return tempfile.mktemp()
+def sonar_naf_object(sonar_naf_file):
+    from KafNafParserPy import KafNafParser
+    return KafNafParser(sonar_naf_file)
