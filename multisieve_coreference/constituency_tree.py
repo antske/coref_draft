@@ -49,18 +49,18 @@ class ConstituencyTree:
         :param headID:  term ID to get direct dependents of
         :return:        a set of IDs that are direct dependents of `ID`
         """
-        with_rel = self.get_direct_dependents_with_relation(ID)
-        return {ID for ID, _ in with_rel} if with_rel is not None else None
+        if ID in self.head2deps:
+            return {ID for ID, _ in self.head2deps[ID]}
 
-    def get_direct_dependents_with_relation(self, ID):
+    def get_direct_parents(self, ID):
         """
-        Get the (ID, relation) tuples of the terms directly dependent on `ID`.
+        Get the term IDs of the terms of which `ID` is a direct dependent.
 
-        :param headID:  term ID to get direct dependents of
-        :return:        a set (ID, relation) tuples that are direct dependents
-                        of `ID`
+        :param headID:  term ID to get direct parents of
+        :return:        a set of IDs that are direct parents of `ID`
         """
-        return self.head2deps.get(ID, None)
+        if ID in self.dep2heads:
+            return {ID for ID, _ in self.dep2heads[ID]}
 
     def get_constituent(self, ID):
         """
@@ -104,15 +104,6 @@ class ConstituencyTree:
         self._head2constituent[ID] = deps
         return deps
 
-    def get_direct_parents(self, ID):
-        """
-        Get the term IDs of the terms of which `ID` is a direct dependent.
-
-        :param headID:  term ID to get direct dependents of
-        :return:        a set of IDs that are direct dependents of `ID`
-        """
-        raise NotImplementedError()
-
     @staticmethod
     def create_headdep_dict(nafobj, term_filter):
         """
@@ -138,7 +129,7 @@ class ConstituencyTree:
         head2deps = {}
         for headID, deps in allhead2deps.items():
             # I don't have to do something with the deps that are filtered out,
-            # because if they are leaves they can just be deleted and if they
+            # because if they are leaves they can be left out and if they
             # aren't leaves they will also appear as headID and handled there.
             deps = {
                 (toID, relation)
