@@ -41,6 +41,20 @@ def test_no_filter(example_constituency_tree):
         {'very random'}
 
 
+def test_deep_get_constituent():
+    tree = ConstituencyTree({
+        't_1016': {('t_1017', 'hd/mod')},
+        't_1017': {('t_1019', 'hd/obj1')},
+        't_1019': {('t_1018', 'hd/mod')}
+    })
+    assert tree.get_constituent('t_1016') == {
+        't_1016',
+        't_1017',
+        't_1019',
+        't_1018'
+    }
+
+
 def test_repr(example_constituency_tree, sonar_constituency_tree):
     repr(example_constituency_tree)
     repr(sonar_constituency_tree)
