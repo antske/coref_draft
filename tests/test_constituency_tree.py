@@ -1,4 +1,5 @@
 import pytest
+import logging
 
 from multisieve_coreference.constituency_tree import ConstituencyTree
 
@@ -41,7 +42,8 @@ def test_no_filter(example_constituency_tree):
         {'very random'}
 
 
-def test_deep_get_constituent():
+def test_deep_get_constituent(caplog):
+    caplog.set_level(logging.DEBUG)
     tree = ConstituencyTree({
         't_1016': {('t_1017', 'hd/mod')},
         't_1017': {('t_1019', 'hd/obj1')},
