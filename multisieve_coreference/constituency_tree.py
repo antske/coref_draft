@@ -8,23 +8,39 @@ class ConstituencyTree:
     Group together information from a constituency tree and expose convenient
     lookups.
     """
-    def __init__(self, nafobj, term_filter=lambda naf, t: True):
+
+    def __init__(self, head2deps):
         """
-        Initialise `ConstituencyTree`.
+        Initialise `ConstituencyTree`
+        """
+        self.head2deps = head2deps
+
+        # Create the reverse too
+        self.dep2heads = {}
+        for headID, deps in head2deps.items():
+            for toID, relation in deps:
+                self.dep2heads.setdefault(toID, set()).add((headID, relation))
+
+        logger.debug(self.head2deps, self.dep2heads)
+        self._head2constituent = {}
+
+    def __repr__(self):
+        return self.__class__.__name__ + '({!r})'.format(self.head2deps)
+
+    @classmethod
+    def from_naf(cls, nafobj, term_filter=lambda naf, t: True):
+        """
+        Initialise this ConstituencyTree from a NAF object
 
         Only keep terms where `term_filter(term)` evaluates True.
 
         :param nafobj:          NAF object from input
         :param term_filter:     filter for terms
         """
-        # Create all dicts
-        # self.
-        self.head2deps, self.dep2heads = self.create_headdep_dicts(
+        return cls(cls.create_headdep_dict(
             nafobj,
             term_filter
-        )
-        logger.debug(self.head2deps, self.dep2heads)
-        self.head2constituent = {}
+        ))
 
     def get_direct_dependents(self, ID):
         """
@@ -33,7 +49,8 @@ class ConstituencyTree:
         :param headID:  term ID to get direct dependents of
         :return:        a set of IDs that are direct dependents of `ID`
         """
-        raise NotImplementedError()
+        with_rel = self.get_direct_dependents_with_relation(ID)
+        return {ID for ID, _ in with_rel} if with_rel is not None else None
 
     def get_direct_dependents_with_relation(self, ID):
         """
@@ -43,7 +60,7 @@ class ConstituencyTree:
         :return:        a set (ID, relation) tuples that are direct dependents
                         of `ID`
         """
-        raise NotImplementedError()
+        return self.head2deps.get(ID, None)
 
     def get_constituent(self, ID):
         """
@@ -55,7 +72,7 @@ class ConstituencyTree:
         :return:        a set of IDs of terms that are dependents of `ID`
         """
         try:
-            return self.head2constituent[ID]
+            return self._head2constituent[ID]
         except KeyError:
             return self._get_constituent(ID, set())
 
@@ -71,9 +88,9 @@ class ConstituencyTree:
         if ID in parents:
             # Prevent loop
             return set()
-        elif ID in self.head2constituent:
+        elif ID in self._head2constituent:
             # Use cache
-            return self.head2constituent[ID]
+            return self._head2constituent[ID]
         # Base case: direct dependents
         deps = {term_id for term_id, _ in self.head2deps.get(ID, [])}
         # Recursive step: call _get_constituent for every direct dependent
@@ -84,7 +101,7 @@ class ConstituencyTree:
         # Make sure ID itself is in it
         deps.add(ID)
         # Cache
-        self.head2constituent[ID] = deps
+        self._head2constituent[ID] = deps
         return deps
 
     def get_direct_parents(self, ID):
@@ -97,7 +114,7 @@ class ConstituencyTree:
         raise NotImplementedError()
 
     @staticmethod
-    def create_headdep_dicts(nafobj, term_filter):
+    def create_headdep_dict(nafobj, term_filter):
         """
         Create dictionaries of dependent to heads and head to direct dependent
 
@@ -137,10 +154,4 @@ class ConstituencyTree:
                     if term_filter(nafobj, super_headID):
                         head2deps.setdefault(super_headID, set()).update(deps)
 
-        # Create the reverse too
-        dep2heads = {}
-        for headID, deps in head2deps.items():
-            for toID, relation in deps:
-                dep2heads.setdefault(toID, set()).add((headID, relation))
-
-        return head2deps, dep2heads
+        return head2deps
