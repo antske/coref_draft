@@ -1,6 +1,8 @@
 import sys
 import subprocess
 
+import pytest
+
 
 def test_main_example(example_naf_file, temp_file, example_naf_output):
     with open(example_naf_file) as fd, open(temp_file, 'w') as out:
@@ -16,6 +18,7 @@ def test_main_example(example_naf_file, temp_file, example_naf_output):
         assert out.read() == correct.read()
 
 
+@pytest.mark.slow
 def test_main_sonar(sonar_naf_file, temp_file):
     with open(sonar_naf_file) as fd, open(temp_file, 'w') as out:
         subprocess.check_call(
