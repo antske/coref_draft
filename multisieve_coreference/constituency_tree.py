@@ -21,7 +21,8 @@ class ConstituencyTree:
             for toID, relation in deps:
                 self.dep2heads.setdefault(toID, set()).add((headID, relation))
 
-        logger.debug(self.head2deps, self.dep2heads)
+        logger.debug("head2deps: {}".format(self.head2deps))
+        logger.debug("dep2heads: {}".format(self.dep2heads))
         self._head2constituent = {}
 
     def __repr__(self):
@@ -94,8 +95,9 @@ class ConstituencyTree:
         # Base case: direct dependents
         deps = {term_id for term_id, _ in self.head2deps.get(ID, [])}
         # Recursive step: call _get_constituent for every direct dependent
-        deps.union(*(
-            self._get_constituent(term_id, parents | {term_id})
+        parents.add(ID)
+        deps.update(*(
+            self._get_constituent(term_id, parents)
             for term_id in deps
         ))
         # Make sure ID itself is in it

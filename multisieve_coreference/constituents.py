@@ -37,8 +37,9 @@ def recursively_get_constituent(head, parents):
     # Base case: direct dependents
     deps = {term_id for term_id, _ in head2deps.get(head, [])}
     # Recursive step: call _get_constituent for every direct dependent
-    deps.union(*(
-        recursively_get_constituent(term_id, parents | {term_id})
+    parents.add(head)
+    deps.update(*(
+        recursively_get_constituent(term_id, parents)
         for term_id in deps
     ))
     # Make sure head itself is in it
