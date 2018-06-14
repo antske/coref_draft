@@ -19,7 +19,7 @@ def sonar_constituency_tree(sonar_naf_object):
     return ConstituencyTree.from_naf(sonar_naf_object)
 
 
-def test_no_filter(example_constituency_tree, caplog):
+def test_no_filter(example_constituency_tree):
     assert example_constituency_tree.head2deps == {
         't_1': {
             ('t_0', 'hd/su'),
