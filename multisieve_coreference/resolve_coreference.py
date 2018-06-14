@@ -220,6 +220,14 @@ def clean_up_coref_classes(coref_classes, mentions):
 
 
 def identify_span_matching_mention(span, mid, mentions):
+    """
+    Find the mentions different from `mid` that have the same span as `span`.
+
+    :param span:        span to match mention spans against
+    :param mid:         ID of the mention that should be ignored
+    :param mentions:    {ID: mention} dictionary of all mentions to consider
+    :return:            list of IDs of mentions that have `span` as their span
+    """
 
     matching_mentions = []
     for ment_id, mention in mentions.items():
@@ -228,6 +236,7 @@ def identify_span_matching_mention(span, mid, mentions):
                 matching_mentions.append(ment_id)
 
     return matching_mentions
+
 
 def update_matching_mentions(mentions, matches, mention1, coref_classes):
     '''
