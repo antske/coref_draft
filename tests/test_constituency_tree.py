@@ -70,10 +70,3 @@ def test_direct_dependents(example_constituency_tree):
         't_0',
         't_2'
     }
-
-
-
-
-# def test_punct_filter(example_naf_object):
-#     def filt(naf, t):
-#         return naf.get_term(t).get_pos() != 'punct'
