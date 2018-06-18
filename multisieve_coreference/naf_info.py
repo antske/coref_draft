@@ -5,10 +5,9 @@ from collections import defaultdict
 from .mention_data import Cmention, Cquotation
 from .constituent_info import get_named_entities, get_constituents
 from .quotation_naf import CquotationNaf
+from . import constituents as csts
 from .constituents import (
     get_constituent,
-    head2deps,
-    dep2heads,
     create_headdep_dicts
 )
 
@@ -538,7 +537,7 @@ def identify_direct_links_to_sip(nafobj, quotation):
     '''
 
     for tid in quotation.span:
-        deps = head2deps.get(tid)
+        deps = csts.head2deps.get(tid)
         if not deps is None:
             depids = create_set_of_tids_from_tidfunction(deps)
             #if one of deps falls outside of quote, it can be linked to the sip
@@ -547,7 +546,7 @@ def identify_direct_links_to_sip(nafobj, quotation):
                 my_joint_set = depids.difference(set(span_with_quotes))
                 head_term = find_relevant_spans(deps, my_joint_set)
                 if not head_term is None:
-                    speaker, addressee, topic = analyze_head_relations(nafobj, head_term, head2deps)
+                    speaker, addressee, topic = analyze_head_relations(nafobj, head_term, csts.head2deps)
                     if not speaker is None:
                         speaker_in_offsets = convert_term_ids_to_offsets(nafobj, speaker)
                         quotation.source = speaker_in_offsets
@@ -562,7 +561,7 @@ def identify_direct_links_to_sip(nafobj, quotation):
 def check_if_quotation_contains_dependent(quotation):
     #FIXME: verify on larger set of development corpus whether this behavior is correct
     for tid in quotation.span:
-        heads = dep2heads.get(tid)
+        heads = csts.dep2heads.get(tid)
         if not heads is None:
             headids = create_set_of_tids_from_tidfunction(heads)
             span_with_quotes = quotation.span + [quotation.beginquote] + [quotation.endquote]
@@ -573,7 +572,7 @@ def check_if_quotation_contains_dependent(quotation):
                             if headrel[1] in ['cmp/body','hd/predc','hd/obj1','hd/vc','hd/su','hd/pc']:
                                 return False
                             elif headrel[1] in ['crd/cnj']:
-                                motherheadrels = dep2heads.get(headrel[0])
+                                motherheadrels = csts.dep2heads.get(headrel[0])
                                 if motherheadrels is not None:
                                     for mhid in motherheadrels:
                                         if mhid[1] in ['cmp/body','hd/predc','hd/obj1','hd/vc','hd/su','hd/pc']:
@@ -619,7 +618,7 @@ def retrieve_sentence_preceding_sip(nafobj, terms):
     for tid in terms:
         myterm = nafobj.get_term(tid)
         if myterm.get_lemma() == 'volgens':
-            deps = head2deps.get(tid)
+            deps = csts.head2deps.get(tid)
             if deps is not None:
                 for dep in deps:
                     if dep[1] == 'hd/obj1':
@@ -634,7 +633,7 @@ def retrieve_quotation_following_sip(nafobj, terms):
     for tid in terms:
         myterm = nafobj.get_term(tid)
         if myterm.get_lemma() == 'aldus':
-            deps = head2deps.get(tid)
+            deps = csts.head2deps.get(tid)
             if deps is not None:
                 for dep in deps:
                     if dep[1] == 'hd/obj1':
@@ -646,7 +645,7 @@ def retrieve_quotation_following_sip(nafobj, terms):
 def identify_addressee_or_topic_relations(nafobj, tid, quotation):
 
     #FIXME: language specific function
-    heads = dep2heads.get(tid)
+    heads = csts.dep2heads.get(tid)
     if heads is not None:
         for headrel in heads:
             headterm = nafobj.get_term(headrel[0])
@@ -706,8 +705,8 @@ def identify_primary_candidate(candidates):
 
     for cand in candidates:
         for tid in cand:
-            if tid in dep2heads:
-                for headrel in dep2heads:
+            if tid in csts.dep2heads:
+                for headrel in csts.dep2heads:
                     if headrel[1] == 'hd/su':
                         return cand
 

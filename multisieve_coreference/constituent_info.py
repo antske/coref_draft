@@ -1,5 +1,7 @@
 from collections import defaultdict
-from .constituents import get_constituent, head2deps, dep2heads
+
+from . import constituents as csts
+from .constituents import get_constituent
 
 
 class Constituent:
@@ -47,9 +49,9 @@ class Constituent:
         :return:
         '''
 
-        for headID, headrel in dep2heads.get(self.head_id, []):
+        for headID, headrel in csts.dep2heads.get(self.head_id, []):
             if headrel == 'hd/su':
-                headscomps = head2deps.get(headID)
+                headscomps = csts.head2deps.get(headID)
                 for depID, deprel in headscomps:
                     if deprel in ['hd/predc', 'hd/predm']:
                         predicative = get_constituent(depID)
@@ -67,7 +69,7 @@ def get_mwe_and_modifiers_and_appositives(head_id):
     mods = []
     apps = []
 
-    for ID, relation in head2deps.get(head_id, []):
+    for ID, relation in csts.head2deps.get(head_id, []):
         if relation == 'mwp/mwp':
             mwe.append(head_id)
         elif relation == 'hd/mod':
@@ -141,9 +143,9 @@ def find_closest_to_head(span):
     head_term_candidates = defaultdict(list)
 
     for tid in span:
-        if tid in head2deps:
+        if tid in csts.head2deps:
             count = 0
-            for deprel in head2deps:
+            for deprel in csts.head2deps:
                 if deprel[0] in span:
                     count += 1
             head_term_candidates[count].append(tid)
