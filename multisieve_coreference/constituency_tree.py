@@ -140,26 +140,41 @@ class ConstituencyTree:
         """
         dep2headIDs = {}
         for headID, deps in head2deps.items():
-            for toID in deps:
+            for toID, _ in deps:
                 dep2headIDs.setdefault(toID, []).append(headID)
-
+        logger.debug("dep2headIDs: {}".format(dep2headIDs))
         filtered = {}
         for headID, deps in head2deps.items():
             # I don't have to do something with the deps that are filtered out,
             # because if they are leaves they can be left out and if they
             # aren't leaves they will also appear as headID and handled there.
+            logger.debug("headID: {}".format(headID))
             deps = {
                 (toID, relation)
                 for toID, relation in deps
                 if term_filter(toID)
             }
+            logger.debug("deps: {}".format(deps))
             if term_filter(headID):
-                filtered.setdefault(headID, set()).update(deps)
-            else:
-                # Delete the head by adding its dependents to the heads of the
-                # head.
-                for super_headID in dep2headIDs[headID]:
-                    if term_filter(super_headID):
-                        filtered.setdefault(super_headID, set()).update(deps)
+                if deps:
+                    filtered.setdefault(headID, set()).update(deps)
+            elif deps:
+                # Delete the head by adding its dependents to the most shallow
+                # head that isn't filtered out.
+                stack = dep2headIDs.get(headID, [])
+                super_heads = []
+                while stack:
+                    logger.debug("stack: {}".format(stack))
+                    super_head = stack.pop()
+                    if term_filter(super_head):
+                        super_heads.append(super_head)
+                    else:
+                        add_to_stack = dep2headIDs.get(super_head, [])
+                        logger.debug("add_to_stack: {}".format(add_to_stack))
+                        stack.extend(
+                            add_to_stack
+                        )
+                for super_head in super_heads:
+                    filtered.setdefault(super_head, set()).update(deps)
 
         return filtered

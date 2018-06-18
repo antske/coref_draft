@@ -29,6 +29,13 @@ def deep_tree():
     })
 
 
+@pytest.fixture(params=[10, 100, 1000, 10000])
+def very_deep_tree(request):
+    return ConstituencyTree({
+        i: {(i + 1, None)} for i in range(request.param)
+    })
+
+
 @pytest.fixture(params=[
     'example_constituency_tree',
     'sonar_constituency_tree',
@@ -72,6 +79,73 @@ def test_deep_get_constituent(deep_tree, caplog):
 
 def test_repr(any_tree):
     repr(any_tree)
+
+
+def test_filter_top_node(example_constituency_tree, deep_tree, caplog):
+    caplog.set_level(logging.DEBUG)
+    tree = example_constituency_tree
+    assert tree.filter_headdep_dict(tree.head2deps, lambda t: t != 't_1') == {}
+    assert deep_tree.filter_headdep_dict(
+        deep_tree.head2deps,
+        lambda t: t != 't_1016'
+    ) == {
+        't_1017': {('t_1019', 'hd/obj1')},
+        't_1019': {('t_1018', 'hd/mod')}
+    }
+
+
+def test_filter_2nd_node(deep_tree, caplog):
+    caplog.set_level(logging.DEBUG)
+    assert deep_tree.filter_headdep_dict(
+        deep_tree.head2deps,
+        lambda t: t != 't_1017'
+    ) == {
+        't_1016': {('t_1019', 'hd/obj1')},
+        't_1019': {('t_1018', 'hd/mod')}
+    }
+
+
+def test_filter_3rd_node(deep_tree, caplog):
+    caplog.set_level(logging.DEBUG)
+    assert deep_tree.filter_headdep_dict(
+        deep_tree.head2deps,
+        lambda t: t != 't_1019'
+    ) == {
+        't_1016': {('t_1017', 'hd/mod')},
+        't_1017': {('t_1018', 'hd/mod')}
+    }
+
+
+def test_filter_4th_node(deep_tree, caplog):
+    caplog.set_level(logging.DEBUG)
+    assert deep_tree.filter_headdep_dict(
+        deep_tree.head2deps,
+        lambda t: t != 't_1018'
+    ) == {
+        't_1016': {('t_1017', 'hd/mod')},
+        't_1017': {('t_1019', 'hd/obj1')},
+    }
+
+
+def test_filter_two_nodes(deep_tree, caplog):
+    caplog.set_level(logging.DEBUG)
+    assert deep_tree.filter_headdep_dict(
+        deep_tree.head2deps,
+        lambda t: t == 't_1016' or t == 't_1018'
+    ) == {
+        't_1016': {('t_1018', 'hd/mod')}
+    }
+
+
+def test_filter_all_but_two_nodes(very_deep_tree, caplog):
+    caplog.set_level(logging.DEBUG)
+    head2deps = very_deep_tree.head2deps
+    root = min(head2deps)
+    leaf = max(head2deps) + 1
+    assert ConstituencyTree.filter_headdep_dict(
+        head2deps,
+        lambda t: t == root or t == leaf
+    ) == {root: {(leaf, None)}}
 
 
 def test_direct_dependents(example_constituency_tree):
