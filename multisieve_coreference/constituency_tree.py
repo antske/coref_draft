@@ -109,13 +109,13 @@ class ConstituencyTree:
     @staticmethod
     def create_headdep_dict(nafobj, term_filter):
         """
-        Create dictionaries of dependent to heads and head to direct dependent
+        Create dictionary of head to direct dependents
 
         Only keep terms where `term_filter(term)` evaluates True.
 
         :param nafobj:          NAF object from input
         :param term_filter:     filter for terms
-        :return:        head2deps, dep2heads
+        :return:                head2deps
         """
 
         allhead2deps = {}
