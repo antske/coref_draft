@@ -35,9 +35,10 @@ class ConstituencyTree:
         :param nafobj:          NAF object from input
         :param term_filter:     filter for terms
         """
-        return cls(cls.create_headdep_dict(
-            nafobj,
-            term_filter
+        unfiltered = cls.create_headdep_dict(nafobj)
+        return cls(cls.filter_headdep_dict(
+            unfiltered,
+            lambda t: term_filter(nafobj, t)
         ))
 
     @staticmethod
@@ -115,44 +116,50 @@ class ConstituencyTree:
         return deps
 
     @staticmethod
-    def create_headdep_dict(nafobj, term_filter):
+    def create_headdep_dict(nafobj):
         """
         Create dictionary of head to direct dependents
 
-        Only keep terms where `term_filter(term)` evaluates True.
-
         :param nafobj:          NAF object from input
-        :param term_filter:     filter for terms
         :return:                head2deps
         """
 
-        allhead2deps = {}
-        dep2headIDs = {}
-        for dep in nafobj.get_dependencies():
-            headID = dep.get_from()
-            toID = dep.get_to()
-            allhead2deps.setdefault(headID, []).append(
-                (toID, dep.get_function())
-            )
-            dep2headIDs.setdefault(toID, []).append(headID)
-
         head2deps = {}
-        for headID, deps in allhead2deps.items():
+        for dep in nafobj.get_dependencies():
+            head2deps.setdefault(dep.get_from(), set()).add(
+                (dep.get_to(), dep.get_function())
+            )
+        return head2deps
+
+    @staticmethod
+    def filter_headdep_dict(head2deps, term_filter):
+        """
+        Only keep terms where `term_filter(term)` evaluates True.
+
+        :param term_filter:     filter for terms
+        """
+        dep2headIDs = {}
+        for headID, deps in head2deps.items():
+            for toID in deps:
+                dep2headIDs.setdefault(toID, []).append(headID)
+
+        filtered = {}
+        for headID, deps in head2deps.items():
             # I don't have to do something with the deps that are filtered out,
             # because if they are leaves they can be left out and if they
             # aren't leaves they will also appear as headID and handled there.
             deps = {
                 (toID, relation)
                 for toID, relation in deps
-                if term_filter(nafobj, toID)
+                if term_filter(toID)
             }
-            if term_filter(nafobj, headID):
-                head2deps.setdefault(headID, set()).update(deps)
+            if term_filter(headID):
+                filtered.setdefault(headID, set()).update(deps)
             else:
                 # Delete the head by adding its dependents to the heads of the
                 # head.
                 for super_headID in dep2headIDs[headID]:
-                    if term_filter(nafobj, super_headID):
-                        head2deps.setdefault(super_headID, set()).update(deps)
+                    if term_filter(super_headID):
+                        filtered.setdefault(super_headID, set()).update(deps)
 
-        return head2deps
+        return filtered
