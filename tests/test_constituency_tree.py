@@ -20,6 +20,24 @@ def sonar_constituency_tree(sonar_naf_object):
     return ConstituencyTree.from_naf(sonar_naf_object)
 
 
+@pytest.fixture
+def deep_tree():
+    return ConstituencyTree({
+        't_1016': {('t_1017', 'hd/mod')},
+        't_1017': {('t_1019', 'hd/obj1')},
+        't_1019': {('t_1018', 'hd/mod')}
+    })
+
+
+@pytest.fixture(params=[
+    'example_constituency_tree',
+    'sonar_constituency_tree',
+    'deep_tree'
+])
+def any_tree(request):
+    return request.getfixturevalue(request.param)
+
+
 def test_no_filter(example_constituency_tree):
     assert example_constituency_tree.head2deps == {
         't_1': {
@@ -42,14 +60,9 @@ def test_no_filter(example_constituency_tree):
         {'very random'}
 
 
-def test_deep_get_constituent(caplog):
+def test_deep_get_constituent(deep_tree, caplog):
     caplog.set_level(logging.DEBUG)
-    tree = ConstituencyTree({
-        't_1016': {('t_1017', 'hd/mod')},
-        't_1017': {('t_1019', 'hd/obj1')},
-        't_1019': {('t_1018', 'hd/mod')}
-    })
-    assert tree.get_constituent('t_1016') == {
+    assert deep_tree.get_constituent('t_1016') == {
         't_1016',
         't_1017',
         't_1019',
@@ -57,9 +70,8 @@ def test_deep_get_constituent(caplog):
     }
 
 
-def test_repr(example_constituency_tree, sonar_constituency_tree):
-    repr(example_constituency_tree)
-    repr(sonar_constituency_tree)
+def test_repr(any_tree):
+    repr(any_tree)
 
 
 def test_direct_dependents(example_constituency_tree):
