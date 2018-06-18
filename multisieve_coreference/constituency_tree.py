@@ -16,10 +16,7 @@ class ConstituencyTree:
         self.head2deps = head2deps
 
         # Create the reverse too
-        self.dep2heads = {}
-        for headID, deps in head2deps.items():
-            for toID, relation in deps:
-                self.dep2heads.setdefault(toID, set()).add((headID, relation))
+        self.dep2heads = self.reverse_headdep_dict(head2deps)
 
         logger.debug("head2deps: {}".format(self.head2deps))
         logger.debug("dep2heads: {}".format(self.dep2heads))
@@ -42,6 +39,17 @@ class ConstituencyTree:
             nafobj,
             term_filter
         ))
+
+    @staticmethod
+    def reverse_headdep_dict(head2deps):
+        """
+        Create dep2heads from head2deps (or visa versa?)
+        """
+        dep2heads = {}
+        for headID, deps in head2deps.items():
+            for toID, relation in deps:
+                dep2heads.setdefault(toID, set()).add((headID, relation))
+        return dep2heads
 
     def get_direct_dependents(self, ID):
         """
