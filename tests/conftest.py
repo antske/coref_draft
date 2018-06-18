@@ -33,13 +33,24 @@ def example_naf_object(example_naf_file):
     return KafNafParser(example_naf_file)
 
 
-# SoNaR file
+# SoNaR files
 @pytest.fixture
-def sonar_naf_file(resources_dir):
+def sonar_naf_file1(resources_dir):
     return os.path.join(resources_dir, 'SoNaR-dpc-bal-001236-nl-sen-in.naf')
 
 
 @pytest.fixture
-def sonar_naf_object(sonar_naf_file):
+def sonar_naf_object1(sonar_naf_file1):
     from KafNafParserPy import KafNafParser
-    return KafNafParser(sonar_naf_file)
+    return KafNafParser(sonar_naf_file1)
+
+
+@pytest.fixture
+def sonar_naf_file2(resources_dir):
+    return os.path.join(resources_dir, 'SoNaR-dpc-cam-001280-nl-sen-in.naf')
+
+
+@pytest.fixture
+def sonar_naf_object2(sonar_naf_file2):
+    from KafNafParserPy import KafNafParser
+    return KafNafParser(sonar_naf_file2)

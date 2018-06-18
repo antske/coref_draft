@@ -13,11 +13,11 @@ def example_constituency_tree(example_naf_object):
 
 
 @pytest.fixture
-def sonar_constituency_tree(sonar_naf_object):
+def sonar_constituency_tree(sonar_naf_object1):
     # <dep from="t_1" to="t_0" rfunc="hd/su" />
     # <!--hd/obj1(herkende, zichzelf)-->
     # <dep from="t_1" to="t_2" rfunc="hd/obj1" />
-    return ConstituencyTree.from_naf(sonar_naf_object)
+    return ConstituencyTree.from_naf(sonar_naf_object1)
 
 
 @pytest.fixture
