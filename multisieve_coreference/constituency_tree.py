@@ -136,6 +136,15 @@ class ConstituencyTree:
         """
         Only keep terms where `term_filter(term)` evaluates True.
 
+        If a term is removed, the link (or function) information is handled as
+        follows:
+
+            from  --parent info-->  removed  --child info-->  to
+
+        becomes
+
+            from  --child info-->  to
+
         :param head2deps:       {head: {(dep, function), ...}}
         :param term_filter:     filter for terms
         """
