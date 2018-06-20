@@ -136,6 +136,7 @@ class ConstituencyTree:
         """
         Only keep terms where `term_filter(term)` evaluates True.
 
+        :param head2deps:       {head: {(dep, function), ...}}
         :param term_filter:     filter for terms
         """
         dep2headIDs = {}
