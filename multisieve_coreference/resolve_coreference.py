@@ -670,6 +670,10 @@ def resolve_coreference(nafin):
     mentions = get_mentions(nafin)
     quotations = identify_direct_quotations(nafin, mentions)
 
+    logger.debug(
+        "Mentions: {}".format('\n'.join(map(repr, mentions.values())))
+    )
+
     logger.info("Sieve 1: Speaker Identification")
     coref_classes = direct_speech_interpretation(quotations, mentions)
     update_mentions(mentions, coref_classes)
