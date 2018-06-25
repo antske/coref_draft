@@ -114,11 +114,10 @@ def merge_two_mentions(mention1, mention2):
     return mention2
 
 
-def merge_mentions(mentions, heads):
+def merge_mentions(mentions):
     '''
     Function that merges information from entity mentions
     :param mentions: dictionary mapping mention number to specific mention
-    :param heads: dictionary mapping head id to mention number
     :return: list of mentions where identical spans are merged
     '''
 
@@ -156,12 +155,10 @@ def get_mentions(nafobj):
 
     mention_spans = get_mention_spans(nafobj)
     mentions = OrderedDict()
-    heads = defaultdict(list)
     for head, constituentInfo in mention_spans.items():
         mid = 'm' + str(len(mentions))
         mention = create_mention(nafobj, constituentInfo, head, mid)
         mentions[mid] = mention
-        heads[head].append(mid)
 
     entities = get_named_entities(nafobj)
     for entity, constituent in entities.items():
@@ -169,9 +166,8 @@ def get_mentions(nafobj):
         mention = create_mention(nafobj, constituent, entity, mid)
         mention.set_entity_type(constituent.etype)
         mentions[mid] = mention
-        heads[entity].append(mid)
 
-    mentions = merge_mentions(mentions, heads)
+    mentions = merge_mentions(mentions)
 
     return mentions
 
