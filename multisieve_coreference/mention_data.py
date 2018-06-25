@@ -39,6 +39,33 @@ class Cmention:
         self.main_modifiers = []
         self.sentence_number = ''
 
+    def __repr__(self):
+        return self.__class__.__name__ + '(' + \
+            'id={!r}, '.format(self.id) + \
+            'span={!r}, '.format(self.span) + \
+            'number={!r}, '.format(self.number) + \
+            'gender={!r}, '.format(self.gender) + \
+            'person={!r}, '.format(self.person) + \
+            'head_id={!r}, '.format(self.head_id) + \
+            'full_head={!r}, '.format(self.full_head) + \
+            'head_pos={!r}, '.format(self.head_pos) + \
+            'relaxed_span={!r}, '.format(self.relaxed_span) + \
+            'in_coref_class={!r}, '.format(self.in_coref_class) + \
+            'entity_type={!r}, '.format(self.entity_type) + \
+            'in_quotation={!r}, '.format(self.in_quotation) + \
+            'relative_pron={!r}, '.format(self.relative_pron) + \
+            'reflective_pron={!r}, '.format(self.reflective_pron) + \
+            'coreference_prohibited={!r}, '.format(self.coreference_prohibited) + \
+            'begin_offset={!r}, '.format(self.begin_offset) + \
+            'end_offset={!r}, '.format(self.end_offset) + \
+            'modifiers={!r}, '.format(self.modifiers) + \
+            'appositives={!r}, '.format(self.appositives) + \
+            'predicatives={!r}, '.format(self.predicatives) + \
+            'no_stop_words={!r}, '.format(self.no_stop_words) + \
+            'main_modifiers={!r}, '.format(self.main_modifiers) + \
+            'sentence_number={!r}, '.format(self.sentence_number) +  \
+            ')'
+
     def set_span(self, span):
 
         self.span = span
