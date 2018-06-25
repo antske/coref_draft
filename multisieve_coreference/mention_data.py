@@ -262,19 +262,6 @@ class Cmention:
         return self.sentence_number
 
 
-class Cmentions:
-    '''
-    This class covers information about the collection of coreference mentions as a whole
-    '''
-
-    def __init__(self, mentions=None, final_id='m0'):
-        '''
-        Constructor for mentions object
-        '''
-        self.mentions = mentions if mentions is not None else []
-        self.final_id = final_id
-
-
 def create_mention(nafobj, constituentInfo, head, mid):
     '''
     Function that creates mention object from naf information
