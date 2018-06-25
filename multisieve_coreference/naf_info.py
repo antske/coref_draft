@@ -197,8 +197,6 @@ def get_sentence_number(nafobj, head):
     return sent_nr
 
 
-
-
 def create_mention(nafobj, constituentInfo, head, mid):
     '''
     Function that creates mention object from naf information
@@ -219,14 +217,14 @@ def create_mention(nafobj, constituentInfo, head, mid):
     mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
     sentence_number = get_sentence_number(nafobj, head)
     mention.set_sentence_number(sentence_number)
-    #add no stop words and main modifiers
+    # add no stop words and main modifiers
     add_non_stopwords(nafobj, span, mention)
     add_main_modifiers(nafobj, span, mention)
-    #mwe info
+    # mwe info
     full_head_tids = constituentInfo.multiword
     full_head_span = convert_term_ids_to_offsets(nafobj, full_head_tids)
     mention.set_full_head(full_head_span)
-    #modifers and appositives:
+    # modifers and appositives:
     relaxed_span = offset_ids_span
     for mod_in_tids in constituentInfo.modifiers:
         mod_span = convert_term_ids_to_offsets(nafobj, mod_in_tids)
@@ -246,14 +244,14 @@ def create_mention(nafobj, constituentInfo, head, mid):
         pred_span = convert_term_ids_to_offsets(nafobj, pred_in_tids)
         mention.add_predicative(pred_span)
 
-    #set sequence of pos FIXME: if not needed till end; remove
-    #os_seq = get_pos_of_span(nafobj, span)
-    #mention.set_pos_seq(pos_seq)
-    #set pos of head
+    # set sequence of pos FIXME: if not needed till end; remove
+    # os_seq = get_pos_of_span(nafobj, span)
+    # mention.set_pos_seq(pos_seq)
+    # set pos of head
     if head is not None:
         head_pos = get_pos_of_term(nafobj, head)
         mention.set_head_pos(head_pos)
-        if head_pos in ['pron','noun','name']:
+        if head_pos in ['pron', 'noun', 'name']:
             analyze_nominal_information(nafobj, head, mention)
 
     begin_offset, end_offset = get_offsets_from_span(nafobj, span)
