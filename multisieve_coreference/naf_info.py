@@ -1,6 +1,6 @@
 import os
 import logging
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from .mention_data import Cmention, Cquotation
 from .constituent_info import get_named_entities, get_constituents
@@ -392,7 +392,7 @@ def get_mentions(nafobj):
     create_headdep_dicts(nafobj)
 
     mention_spans = get_mention_spans(nafobj)
-    mentions = {}
+    mentions = OrderedDict()
     heads = defaultdict(list)
     for head, constituentInfo in mention_spans.items():
         mid = 'm' + str(len(mentions))
