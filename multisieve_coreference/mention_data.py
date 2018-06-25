@@ -38,8 +38,10 @@ class Cmention:
         #TODO: revise so that provides information needed for some sieve;
         #STEP 1: seive 3 needs option to remove post-head modifiers
         '''
-        self.id = mid #confirmed
-        self.span = span #becomes dictionary mapping token to string for creating the surface of substrings
+        self.id = mid   # confirmed
+        # becomes dictionary mapping token to string for creating the surface
+        # of substrings
+        self.span = span
         self.number = ''
         self.gender = ''
         self.person = ''
@@ -47,7 +49,7 @@ class Cmention:
         self.full_head = []
         self.head_pos = head_pos
         self.relaxed_span = []
-        self.in_coref_class = [] #confirmed
+        self.in_coref_class = []    # confirmed
         self.entity_type = None
         self.in_quotation = False
         self.relative_pron = False
@@ -413,9 +415,9 @@ def identify_and_set_number(morphofeat, myterm, mention):
         mention.set_number('mv')
     elif 'getal' in morphofeat:
         lemma = myterm.get_lemma()
-        if lemma in ['haar','zijn','mijn','jouw','je']:
+        if lemma in ['haar', 'zijn', 'mijn', 'jouw', 'je']:
             mention.set_number('ev')
-        elif lemma in ['ons','jullie','hun']:
+        elif lemma in ['ons', 'jullie', 'hun']:
             mention.set_number('mv')
 
 

@@ -68,8 +68,8 @@ def get_offsets_from_span(nafobj, span):
     begin_offset = 0
     end_offset = 0
     if len(offsets) > 0:
-        begin_offset = sorted(offsets)[0]
-        end_offset = sorted(end_offsets)[-1]
+        begin_offset = min(offsets)
+        end_offset = max(end_offsets)
 
     return begin_offset, end_offset
 

@@ -27,13 +27,13 @@ def get_relevant_head_ids(nafobj):
     :return: list of term ids (string)
     '''
 
-    nominal_pos = ['noun','pron','name']
+    nominal_pos = ['noun', 'pron', 'name']
     mention_heads = []
     for term in nafobj.get_terms():
         pos_tag = term.get_pos()
         if pos_tag in nominal_pos:
             mention_heads.append(term.get_id())
-        #check if possessive pronoun
+        # check if possessive pronoun
         elif pos_tag == 'det' and 'VNW(bez' in term.get_morphofeat():
             mention_heads.append(term.get_id())
 
@@ -124,7 +124,7 @@ def merge_mentions(mentions, heads):
 
     final_mentions = {}
 
-    #TODO: create merge function and merge identical candidates
+    # TODO: create merge function and merge identical candidates
 
     for m, val in mentions.items():
         found = False
@@ -134,7 +134,7 @@ def merge_mentions(mentions, heads):
                 final_mentions[prevm] = updated_mention
                 found = True
             elif set(val.span) == set(preval.span):
-               # print('same_set')
+                # print('same_set')
                 updated_mention = merge_two_mentions(val, preval)
                 final_mentions[prevm] = updated_mention
                 found = True
