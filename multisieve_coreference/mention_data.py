@@ -32,7 +32,7 @@ class Cmention:
     This class covers information about mentions that is relevant for coreference resoltion
     '''
 
-    def __init__(self, mid, span=[], head_id=None, head_pos=None):
+    def __init__(self, mid, span=None, head_id=None, head_pos=None):
         '''
         Constructor of the mention
         #TODO: revise so that provides information needed for some sieve;
@@ -41,7 +41,7 @@ class Cmention:
         self.id = mid   # confirmed
         # becomes dictionary mapping token to string for creating the surface
         # of substrings
-        self.span = span
+        self.span = [] if span is None else span
         self.number = ''
         self.gender = ''
         self.person = ''
