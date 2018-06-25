@@ -49,6 +49,7 @@ Issues
  - [ ] `global stop_words` should be a `set`
  - [ ] `linguisticProcessors` layer should be added to `nafHeader`
  - [ ] `create_mention` docstring
+ - [ ] `fem` and `masc` do not appear in output of Alpino, but _are_ used to identify gender
 
 License
 ------
