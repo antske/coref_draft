@@ -422,11 +422,11 @@ def identify_and_set_number(morphofeat, myterm, mention):
 def identify_and_set_gender(morphofeat, mention):
 
     if 'fem' in morphofeat:
-        mention.set_number('fem')
+        mention.set_gender('fem')
     elif 'masc' in morphofeat:
-        mention.set_number('masc')
+        mention.set_gender('masc')
     elif 'onz,' in morphofeat:
-        mention.set_number('neut')
+        mention.set_gender('neut')
 
 
 def set_is_relative_pronoun(morphofeat, mention):
