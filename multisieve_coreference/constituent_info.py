@@ -17,10 +17,12 @@ class Constituent:
         self.head_id = head_id
         self.span = get_constituent(head_id) if span is None else span
 
+        # Set the default values for `multiword`, `modifiers` and `appositives`
         if multiword is None or modifiers is None or appositives is None:
             self.multiword, self.modifiers, self.appositives = \
                 get_mwe_and_modifiers_and_appositives(self.head_id)
 
+        # Override the default if something different was passed
         if multiword is not None:
             self.multiword = multiword
         if modifiers is not None:
