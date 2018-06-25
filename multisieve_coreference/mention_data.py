@@ -2,6 +2,29 @@
 This module parses the term layer of a KAF/NAF object
 """
 from __future__ import print_function
+import os
+
+from .offset_info import (
+    convert_term_ids_to_offsets,
+    get_offset,
+    get_offsets_from_span,
+    get_pos_of_term,
+)
+
+stop_words = []
+
+
+def initiate_stopword_list(lang='nl'):
+
+    global stop_words
+    resources = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources"))
+
+    stopfile = open(os.path.join(resources, lang, 'stop_words.txt'),'r')
+    for line in stopfile:
+        stop_words.append(line.rstrip())
+
+    stopfile.close()
+
 
 
 class Cmention:
@@ -248,3 +271,167 @@ class Cmentions:
         '''
         self.mentions = mentions if mentions is not None else []
         self.final_id = final_id
+
+
+def create_mention(nafobj, constituentInfo, head, mid):
+    '''
+    Function that creates mention object from naf information
+    :param nafobj: the input naffile
+    :param span: the mention span
+    :param span: the id of the constituent's head
+    :param idnr: the idnr (for creating a unique mention id
+    :return:
+    '''
+
+    if head is None:
+        head_id = head
+    else:
+        head_id = get_offset(nafobj, head)
+
+    span = constituentInfo.span
+    offset_ids_span = convert_term_ids_to_offsets(nafobj, span)
+    mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
+    sentence_number = get_sentence_number(nafobj, head)
+    mention.set_sentence_number(sentence_number)
+    # add no stop words and main modifiers
+    add_non_stopwords(nafobj, span, mention)
+    add_main_modifiers(nafobj, span, mention)
+    # mwe info
+    full_head_tids = constituentInfo.multiword
+    full_head_span = convert_term_ids_to_offsets(nafobj, full_head_tids)
+    mention.set_full_head(full_head_span)
+    # modifers and appositives:
+    relaxed_span = offset_ids_span
+    for mod_in_tids in constituentInfo.modifiers:
+        mod_span = convert_term_ids_to_offsets(nafobj, mod_in_tids)
+        mention.add_modifier(mod_span)
+        for mid in mod_span:
+            if mid > head_id and mid in relaxed_span:
+                relaxed_span.remove(mid)
+    for app_in_tids in constituentInfo.appositives:
+        app_span = convert_term_ids_to_offsets(nafobj, app_in_tids)
+        mention.add_appositive(app_span)
+        for mid in app_span:
+            if mid > head_id and mid in relaxed_span:
+                relaxed_span.remove(mid)
+    mention.set_relaxed_span(relaxed_span)
+
+    for pred_in_tids in constituentInfo.predicatives:
+        pred_span = convert_term_ids_to_offsets(nafobj, pred_in_tids)
+        mention.add_predicative(pred_span)
+
+    # set sequence of pos FIXME: if not needed till end; remove
+    # os_seq = get_pos_of_span(nafobj, span)
+    # mention.set_pos_seq(pos_seq)
+    # set pos of head
+    if head is not None:
+        head_pos = get_pos_of_term(nafobj, head)
+        mention.set_head_pos(head_pos)
+        if head_pos in ['pron', 'noun', 'name']:
+            analyze_nominal_information(nafobj, head, mention)
+
+    begin_offset, end_offset = get_offsets_from_span(nafobj, span)
+    mention.set_begin_offset(begin_offset)
+    mention.set_end_offset(end_offset)
+
+    return mention
+
+
+def add_main_modifiers(nafobj, span, mention):
+    '''
+    Function that creates list of all modifiers that are noun or adjective (possibly including head itself)
+    :param nafobj: input naf
+    :param span: list of term ids
+    :param mention: mention object
+    :return:
+    '''
+
+    main_mods = []
+    for tid in span:
+        term = nafobj.get_term(tid)
+        if term.get_pos() in ['adj','noun']:
+            main_mods.append(tid)
+
+    main_mods_offset = convert_term_ids_to_offsets(nafobj, main_mods)
+    mention.set_main_modifiers(main_mods_offset)
+
+
+def add_non_stopwords(nafobj, span, mention):
+    '''
+    Function that verifies which terms in span are not stopwords and adds these to non-stop-word list
+    :param nafobj: input naf (for linguistic information)
+    :param span: list of term ids
+    :param mention: mention object
+    :return:
+    '''
+    non_stop_terms = []
+
+    for tid in span:
+        my_term = nafobj.get_term(tid)
+        if not my_term.get_type() == 'closed' and not my_term.get_lemma().lower() in stop_words:
+            non_stop_terms.append(tid)
+
+    non_stop_span = convert_term_ids_to_offsets(nafobj, non_stop_terms)
+    mention.set_no_stop_words(non_stop_span)
+
+
+def analyze_nominal_information(nafobj, term_id, mention):
+
+    myterm = nafobj.get_term(term_id)
+    morphofeat = myterm.get_morphofeat()
+    identify_and_set_person(morphofeat, mention)
+    identify_and_set_gender(morphofeat, mention)
+    identify_and_set_number(morphofeat, myterm, mention)
+    set_is_relative_pronoun(morphofeat, mention)
+
+
+def get_sentence_number(nafobj, head):
+
+    myterm = nafobj.get_term(head)
+    tokid = myterm.get_span().get_span_ids()[0]
+    mytoken = nafobj.get_token(tokid)
+    sent_nr = int(mytoken.get_sent())
+
+    return sent_nr
+
+
+def identify_and_set_person(morphofeat, mention):
+
+    if '1' in morphofeat:
+        mention.set_person('1')
+    elif '2' in morphofeat:
+        mention.set_person('2')
+    elif '3' in morphofeat:
+        mention.set_person('3')
+
+
+def identify_and_set_number(morphofeat, myterm, mention):
+
+    if 'ev' in morphofeat:
+        mention.set_number('ev')
+    elif 'mv' in morphofeat:
+        mention.set_number('mv')
+    elif 'getal' in morphofeat:
+        lemma = myterm.get_lemma()
+        if lemma in ['haar','zijn','mijn','jouw','je']:
+            mention.set_number('ev')
+        elif lemma in ['ons','jullie','hun']:
+            mention.set_number('mv')
+
+
+def identify_and_set_gender(morphofeat, mention):
+
+    if 'fem' in morphofeat:
+        mention.set_number('fem')
+    elif 'masc' in morphofeat:
+        mention.set_number('masc')
+    elif 'onz,' in morphofeat:
+        mention.set_number('neut')
+
+
+def set_is_relative_pronoun(morphofeat, mention):
+
+    if 'betr,' in morphofeat:
+        mention.set_relative_pronoun(True)
+    if 'refl,' in morphofeat:
+        mention.set_reflective_pronoun(True)
