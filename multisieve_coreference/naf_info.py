@@ -2,7 +2,8 @@ import os
 import logging
 from collections import defaultdict, OrderedDict
 
-from .mention_data import Cmention, Cquotation
+from .mention_data import Cmention
+from .quotation import Cquotation
 from .constituent_info import get_named_entities, get_constituents
 from .quotation_naf import CquotationNaf
 from . import constituents as csts
