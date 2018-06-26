@@ -17,19 +17,22 @@ stop_words = []
 def initiate_stopword_list(lang='nl'):
 
     global stop_words
-    resources = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources"))
+    resources = os.path.abspath(os.path.join(
+        os.path.dirname(__file__),
+        "resources"
+    ))
 
-    stopfile = open(os.path.join(resources, lang, 'stop_words.txt'),'r')
+    stopfile = open(os.path.join(resources, lang, 'stop_words.txt'), 'r')
     for line in stopfile:
         stop_words.append(line.rstrip())
 
     stopfile.close()
 
 
-
 class Cmention:
     '''
-    This class covers information about mentions that is relevant for coreference resoltion
+    This class covers information about mentions that is relevant for
+    coreference resoltion
     '''
 
     def __init__(self, mid, span=None, head_offset=None, head_pos=None):
@@ -66,30 +69,30 @@ class Cmention:
 
     def __repr__(self):
         return self.__class__.__name__ + '(' + \
-            'id={!r}, '.format(self.id) + \
-            'span={!r}, '.format(self.span) + \
-            'number={!r}, '.format(self.number) + \
-            'gender={!r}, '.format(self.gender) + \
-            'person={!r}, '.format(self.person) + \
-            'head_offset={!r}, '.format(self.head_offset) + \
-            'full_head={!r}, '.format(self.full_head) + \
-            'head_pos={!r}, '.format(self.head_pos) + \
-            'relaxed_span={!r}, '.format(self.relaxed_span) + \
-            'in_coref_class={!r}, '.format(self.in_coref_class) + \
-            'entity_type={!r}, '.format(self.entity_type) + \
-            'in_quotation={!r}, '.format(self.in_quotation) + \
-            'relative_pron={!r}, '.format(self.relative_pron) + \
-            'reflective_pron={!r}, '.format(self.reflective_pron) + \
-            'coreference_prohibited={!r}, '.format(self.coreference_prohibited) + \
-            'begin_offset={!r}, '.format(self.begin_offset) + \
-            'end_offset={!r}, '.format(self.end_offset) + \
-            'modifiers={!r}, '.format(self.modifiers) + \
-            'appositives={!r}, '.format(self.appositives) + \
-            'predicatives={!r}, '.format(self.predicatives) + \
-            'no_stop_words={!r}, '.format(self.no_stop_words) + \
-            'main_modifiers={!r}, '.format(self.main_modifiers) + \
-            'sentence_number={!r}, '.format(self.sentence_number) +  \
-            ')'
+            'id={self.id!r}, ' \
+            'span={self.span!r}, ' \
+            'number={self.number!r}, ' \
+            'gender={self.gender!r}, ' \
+            'person={self.person!r}, ' \
+            'head_offset={self.head_offset!r}, ' \
+            'full_head={self.full_head!r}, ' \
+            'head_pos={self.head_pos!r}, ' \
+            'relaxed_span={self.relaxed_span!r}, ' \
+            'in_coref_class={self.in_coref_class!r}, ' \
+            'entity_type={self.entity_type!r}, ' \
+            'in_quotation={self.in_quotation!r}, ' \
+            'relative_pron={self.relative_pron!r}, ' \
+            'reflective_pron={self.reflective_pron!r}, ' \
+            'coreference_prohibited={self.coreference_prohibited!r}, ' \
+            'begin_offset={self.begin_offset!r}, ' \
+            'end_offset={self.end_offset!r}, ' \
+            'modifiers={self.modifiers!r}, ' \
+            'appositives={self.appositives!r}, ' \
+            'predicatives={self.predicatives!r}, ' \
+            'no_stop_words={self.no_stop_words!r}, ' \
+            'main_modifiers={self.main_modifiers!r}, ' \
+            'sentence_number={self.sentence_number!r}, ' \
+            ')'.format(self=self)
 
     def set_span(self, span):
 
