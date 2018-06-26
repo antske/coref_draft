@@ -28,24 +28,23 @@ def add_coreference_to_naf(nafobj, corefclasses, mentions):
         mids = coref_according_to_index.get(key)
         if mids is not None:
             mids = set(mids)
-            if len(mids) > 1:
-                nafCoref = Ccoreference()
-                cid = 'co' + str(start_count)
-                start_count += 1
-                nafCoref.set_id(cid)
-                nafCoref.set_type('entity')
-                data = sorted(
-                    get_terms_from_offsets(
-                        nafobj,
-                        mention.span,
-                        mention.head_offset
-                    )
-                    for mention in map(mentions.get, mids)
+            nafCoref = Ccoreference()
+            cid = 'co' + str(start_count)
+            start_count += 1
+            nafCoref.set_id(cid)
+            nafCoref.set_type('entity')
+            data = sorted(
+                get_terms_from_offsets(
+                    nafobj,
+                    mention.span,
+                    mention.head_offset
                 )
-                for term_id_span, head_id in data:
-                    coref_span = create_span(term_id_span, head_id)
-                    nafCoref.add_span_object(coref_span)
-                nafobj.add_coreference(nafCoref)
+                for mention in map(mentions.get, mids)
+            )
+            for term_id_span, head_id in data:
+                coref_span = create_span(term_id_span, head_id)
+                nafCoref.add_span_object(coref_span)
+            nafobj.add_coreference(nafCoref)
 
 
 def create_span(term_id_span, head_id):

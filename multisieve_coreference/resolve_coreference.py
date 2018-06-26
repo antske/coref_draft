@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from KafNafParserPy import KafNafParser
 
+from . import constants as c
 from .dump import add_coreference_to_naf
 from .naf_info import (
     get_mentions,
@@ -797,33 +798,57 @@ def resolve_coreference(nafin):
     return coref_classes, mentions
 
 
-def process_coreference(nafin):
+def process_coreference(
+        nafin,
+        include_singletons=c.INCLUDE_SINGLETONS_IN_OUTPUT):
     """
     Process coreferences and add to the given NAF.
     Note that coreferences are added in place, and the NAF is returned for convenience
     """
     coref_classes, mentions = resolve_coreference(nafin)
+    if not include_singletons:
+        logger.info("Removing singleton coreference classes")
+        remove_singleton_coreference_classes(coref_classes)
+
     logger.info("Adding coreference information to NAF...")
     add_coreference_to_naf(nafin, coref_classes, mentions)
     return nafin
-    
+
+
+def remove_singleton_coreference_classes(coref_classes):
+    singletons = set()
+    for cID, mention_ids in coref_classes.items():
+        if len(mention_ids) < 2:
+            singletons.add(cID)
+
+    for cID in singletons:
+        del coref_classes[cID]
+
 
 def main(argv=None):
-    #args and options left for later
+    # args and options left for later
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
     parser.add_argument('-l', '--level', help="Logging level",
                         default='WARNING')
-    log_level = parser.parse_args().level
-    logging.basicConfig(level=log_level)
+    parser.add_argument(
+        '-s',
+        '--include_singletons',
+        help="Whether to include singletons in the output",
+        action='store_true',
+        dest='include_singletons'
+    )
+    cmdl_args = vars(parser.parse_args(argv))
+    logging.basicConfig(level=cmdl_args.pop('level'))
 
     logger.info("Reading...")
     nafin = KafNafParser(sys.stdin)
     logger.info("Processing...")
-    nafin = process_coreference(nafin)
+    nafin = process_coreference(nafin, **cmdl_args)
     logger.info("Writing...")
     nafin.dump()
+
 
 if __name__ == '__main__':
     main()

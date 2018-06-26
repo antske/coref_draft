@@ -35,6 +35,10 @@ process_coreference(naf_object)
 
 Calling `process_coreference` will change the naf_object in-place by adding coref nodes (if any).
 
+
+**!! NB !!** Singleton clusters are left out by default. To Include singleton clusters pass `-s` or `--include_singletons` on the command line or call `process_coreference(naf_object, include_singletons=True)`.
+
+
 Contact
 ------
 
