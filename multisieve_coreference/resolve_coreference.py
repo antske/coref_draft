@@ -742,11 +742,11 @@ def main(argv=None):
     log_level = parser.parse_args().level
     logging.basicConfig(level=log_level)
 
-    logger.debug("Reading...")
+    logger.info("Reading...")
     nafin = KafNafParser(sys.stdin)
-    logger.debug("Processing...")
+    logger.info("Processing...")
     nafin = process_coreference(nafin)
-    logger.debug("Writing...")
+    logger.info("Writing...")
     nafin.dump()
 
 if __name__ == '__main__':
