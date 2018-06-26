@@ -35,37 +35,92 @@ class Cmention:
     coreference resoltion
     '''
 
-    def __init__(self, mid, span=None, head_offset=None, head_pos=None):
+    def __init__(
+            self,
+            id,
+            span,
+            head_offset=None,
+            head_pos=None,
+            number='',
+            gender='',
+            person='',
+            full_head=None,
+            relaxed_span=None,
+            in_coref_class=None,
+            entity_type=None,
+            in_quotation=False,
+            relative_pron=False,
+            reflective_pron=False,
+            coreference_prohibited=None,
+            modifiers=None,
+            appositives=None,
+            predicatives=None,
+            no_stop_words=None,
+            main_modifiers=None,
+            sentence_number='',
+            ):
         '''
         Constructor of the mention
         #TODO: revise so that provides information needed for some sieve;
         #STEP 1: seive 3 needs option to remove post-head modifiers
+
+        :type span:                    list
+        :type head_offset:             int
+        :type head_pos:                str
+        :type number:                  str
+        :type gender:                  str
+        :type person:                  str
+        :type full_head:               list
+        :type relaxed_span:            list
+        :type in_coref_class:          list
+        :type entity_type:             str
+        :type in_quotation:            bool
+        :type relative_pron:           bool
+        :type reflective_pron:         bool
+        :type coreference_prohibited:  list
+        :type begin_offset:            str
+        :type end_offset:              str
+        :type modifiers:               list
+        :type appositives:             list
+        :type predicatives:            list
+        :type no_stop_words:           list
+        :type main_modifiers:          list
+        :type sentence_number:         str
         '''
-        self.id = mid   # confirmed
-        # becomes dictionary mapping token to string for creating the surface
-        # of substrings
-        self.span = [] if span is None else span
-        self.number = ''
-        self.gender = ''
-        self.person = ''
+
+        self.id = id   # confirmed
+        self.span = span
         self.head_offset = head_offset
-        self.full_head = []
         self.head_pos = head_pos
-        self.relaxed_span = []
-        self.in_coref_class = []    # confirmed
-        self.entity_type = None
-        self.in_quotation = False
-        self.relative_pron = False  ## TODO!
-        self.reflective_pron = False
-        self.coreference_prohibited = []
-        self.begin_offset = ''
-        self.end_offset = ''
-        self.modifiers = []
-        self.appositives = []
-        self.predicatives = []
-        self.no_stop_words = []
-        self.main_modifiers = []
-        self.sentence_number = ''
+
+        self.full_head = [] if full_head is None else full_head
+
+        self.begin_offset = self.span[0]
+        self.end_offset = self.span[-1]
+        self.sentence_number = sentence_number
+
+        self.relaxed_span = [] if relaxed_span is None else relaxed_span
+        self.no_stop_words = [] if no_stop_words is None else no_stop_words
+
+        # confirmed
+        self.in_coref_class = [] if in_coref_class is None else in_coref_class
+
+        self.coreference_prohibited = [] if coreference_prohibited is None \
+            else coreference_prohibited
+
+        self.modifiers = [] if modifiers is None else modifiers
+        self.main_modifiers = [] if main_modifiers is None else main_modifiers
+        self.appositives = [] if appositives is None else appositives
+        self.predicatives = [] if predicatives is None else predicatives
+
+        self.number = number
+        self.gender = gender
+        self.person = person
+        self.entity_type = entity_type
+
+        self.in_quotation = in_quotation
+        self.relative_pron = relative_pron  # TODO!
+        self.reflective_pron = reflective_pron
 
     def __repr__(self):
         return self.__class__.__name__ + '(' + \
@@ -84,8 +139,6 @@ class Cmention:
             'relative_pron={self.relative_pron!r}, ' \
             'reflective_pron={self.reflective_pron!r}, ' \
             'coreference_prohibited={self.coreference_prohibited!r}, ' \
-            'begin_offset={self.begin_offset!r}, ' \
-            'end_offset={self.end_offset!r}, ' \
             'modifiers={self.modifiers!r}, ' \
             'appositives={self.appositives!r}, ' \
             'predicatives={self.predicatives!r}, ' \
