@@ -38,6 +38,17 @@ class Constituent:
 
         self.etype = etype
 
+    def __repr__(self):
+        return self.__class__.__name__ + '(' \
+            'head_id={self.head_id}, ' \
+            'span={self.span}, ' \
+            'multiword={self.multiword}, ' \
+            'modifiers={self.modifiers}, ' \
+            'appositives={self.appositives}, ' \
+            'predicatives={self.predicatives}, ' \
+            'etype={self.etype}, ' \
+            ')'.format(self=self)
+
     def add_predicative(self, pred):
 
         self.predicatives.append(pred)
