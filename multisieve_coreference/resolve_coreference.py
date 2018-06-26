@@ -117,8 +117,8 @@ def included_in_direct_speech(quotations, mention, coref_class):
             mention.in_quotation = True
             source = quote.get_source()
             addressee = quote.get_addressee()
+            topic = quote.get_topic()
             if mention.head_pos == 'pron':
-                topic = quote.get_topic()
                 if mention.get_person() == '1':
                     if source is not None:
                         update_coref_class(coref_class, mention, source)
