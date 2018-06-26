@@ -94,175 +94,36 @@ class Cmention:
             'sentence_number={self.sentence_number!r}, ' \
             ')'.format(self=self)
 
-    def set_span(self, span):
-
-        self.span = span
-
-    def get_span(self):
-
-        return self.span
-
-    def set_person(self, person):
-        self.person = person
-
-    def get_person(self):
-        return self.person
-
-    def set_number(self, number):
-        self.number = number
-
-    def get_number(self):
-        return self.number
-
-    def set_gender(self, gender):
-        self.gender = gender
-
-    def get_gender(self):
-        return self.gender
-
-    def set_head_id(self, hid):
-        self.head_offset = hid
-
-    def get_head_id(self):
-        return self.head_offset
-
-    def set_full_head(self, full_head):
-        self.full_head = full_head
-
-    def get_full_head(self):
-        return self.full_head
-
-    def set_relaxed_span(self, relaxed_span):
-        self.relaxed_span = relaxed_span
-
     def add_relaxed_span_id(self, rsid):
         self.relaxed_span.append(rsid)
-
-    def get_relaxed_span(self):
-        return self.relaxed_span
-
-    def set_head_pos(self, head_pos):
-        self.head_pos = head_pos
-
-    def get_head_pos(self):
-
-        return self.head_pos
-
-    def set_entity_type(self, etype):
-
-        self.entity_type = etype
-
-    def get_entity_type(self):
-
-        return self.entity_type
-
-    def set_relative_pronoun(self, bool):
-
-        self.relative_pron = bool
 
     def is_relative_pronoun(self):
 
         return self.relative_pron
 
-    def set_reflective_pronoun(self, bool):
-
-        self.reflective_pron = bool
-
     def is_reflective_pronoun(self):
 
         return self.reflective_pron
-
-    def set_in_coref_class(self, coref_id):
-
-        self.in_coref_class.append(coref_id)
-
-    def get_in_coref_class(self):
-
-        return self.in_coref_class
-
-    def set_begin_offset(self, boffset):
-
-        self.begin_offset = boffset
-
-    def get_begin_offset(self):
-
-        return self.begin_offset
-
-    def set_end_offset(self, eoffset):
-
-        self.end_offset = eoffset
-
-    def get_end_offset(self):
-
-        return self.end_offset
-
-    def set_modifiers(self, mods):
-
-        self.modifiers = mods
 
     def add_modifier(self, mod):
 
         self.modifiers.append(mod)
 
-    def get_modifiers(self):
-
-        return self.modifiers
-
-    def set_appositives(self, apps):
-
-        self.appositives = apps
-
     def add_appositive(self, app):
 
         self.appositives.append(app)
-
-    def get_appositives(self):
-
-        return self.appositives
-
-    def set_predicatives(self, preds):
-
-        self.predicatives = preds
 
     def add_predicative(self, pred):
 
         self.predicatives.append(pred)
 
-    def get_predicatives(self):
-
-        return self.predicatives
-
-    def set_no_stop_words(self, nsw):
-
-        self.no_stop_words = nsw
-
     def add_no_stop_word(self, nsw):
 
         self.no_stop_words.append(nsw)
 
-    def get_no_stop_words(self):
-
-        return self.no_stop_words
-
-    def set_main_modifiers(self, mmods):
-
-        self.main_modifiers = mmods
-
     def add_main_modifier(self, mmod):
 
         self.main_modifiers.append(mmod)
-
-    def get_main_modifiers(self):
-
-        return self.main_modifiers
-
-    def set_sentence_number(self, sentnr):
-
-        self.sentence_number = sentnr
-
-    def get_sentence_number(self):
-
-        return self.sentence_number
 
 
 def create_mention(nafobj, constituentInfo, head, mid):
