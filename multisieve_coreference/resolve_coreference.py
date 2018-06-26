@@ -45,8 +45,8 @@ def match_full_name_overlap(mentions, coref_classes):
     #FIXME: verify (when evaluating) whether prohibited needs to be taken into account here
     #FIXME 2: now only surface strings, we may want to look at lemma matches as well
     for mid, mention in mentions.items():
-        if mention.get_head_pos() in ['name', 'noun']:
-            mention_string = get_string_from_ids(mention.get_span())
+        if mention.head_pos in ['name', 'noun']:
+            mention_string = get_string_from_ids(mention.span)
             if mention_string in found_entities:
                 coref_id = found_entities.get(mention_string)
                 if coref_id not in mention.in_coref_class:
@@ -72,8 +72,8 @@ def match_relaxed_string(mentions, coref_classes):
     '''
     found_relaxed_strings = {}
     for mid, mention in mentions.items():
-        if mention.get_head_pos() in ['name','noun']:
-            relaxed_string = get_string_from_ids(mention.get_relaxed_span())
+        if mention.head_pos in ['name', 'noun']:
+            relaxed_string = get_string_from_ids(mention.relaxed_span)
             if relaxed_string in found_relaxed_strings:
                 coref_id = found_relaxed_strings.get(relaxed_string)
                 if coref_id not in mention.in_coref_class:
@@ -116,25 +116,25 @@ def included_in_direct_speech(quotations, mention, coref_class):
         if mention_span_set.issubset(set(quote.span)):
             #FIXME check if needed
             mention.in_quotation = True
-            source = quote.get_source()
-            addressee = quote.get_addressee()
-            topic = quote.get_topic()
+            source = quote.source
+            addressee = quote.addressee
+            topic = quote.topic
             if mention.head_pos == 'pron':
-                if mention.get_person() == '1':
+                if mention.person == '1':
                     if source is not None:
                         update_coref_class(coref_class, mention, source)
                     if topic is not None:
                         mention.coreference_prohibited.append(topic)
                     if addressee is not None:
                         mention.coreference_prohibited.append(addressee)
-                elif mention.get_person() == '2':
+                elif mention.person == '2':
                     if source is not None:
                         mention.coreference_prohibited.append(source)
                     if topic is not None:
                         mention.coreference_prohibited.append(topic)
                     if addressee is not None:
                         update_coref_class(coref_class, mention, addressee)
-                elif mention.get_person() == '3':
+                elif mention.person == '3':
                     if source is not None:
                         mention.coreference_prohibited.append(source)
                     if topic is not None:
@@ -228,7 +228,7 @@ def identify_span_matching_mention(span, mid, mentions):
     matching_mentions = []
     for ment_id, mention in mentions.items():
         if not ment_id == mid:
-            if set(mention.get_span()) == set(span):
+            if set(mention.span) == set(span):
                 matching_mentions.append(ment_id)
 
     return matching_mentions
@@ -244,28 +244,28 @@ def update_matching_mentions(mentions, matches, mention1, coref_classes):
     :return:
     '''
     coref_id = None
-    if len(mention1.get_in_coref_class()) > 0:
-        for c_class in mention1.get_in_coref_class():
+    if len(mention1.in_coref_class) > 0:
+        for c_class in mention1.in_coref_class:
             if coref_classes[c_class] is not None:
                 coref_id = c_class
     else:
         for matching_ment in matches:
             myMention = mentions.get(matching_ment)
-            if len(myMention.get_in_coref_class()) > 0:
-                for c_coref in myMention.get_in_coref_class():
+            if len(myMention.in_coref_class) > 0:
+                for c_coref in myMention.in_coref_class:
                     if coref_classes.get(c_coref) is not None:
                         coref_id = c_coref
     if coref_id is None:
         coref_id = len(coref_classes)
-    if not mention1.id in coref_classes[coref_id]:
+    if mention1.id not in coref_classes[coref_id]:
         coref_classes[coref_id].add(mention1.id)
-        if not coref_id in mention1.get_in_coref_class():
+        if coref_id not in mention1.in_coref_class:
             mention1.in_coref_class.append(coref_id)
     for matching in matches:
-        if not matching in coref_classes[coref_id]:
+        if matching not in coref_classes[coref_id]:
             coref_classes[coref_id].add(matching)
             matchingMention = mentions.get(matching)
-            if not coref_id in matchingMention.get_in_coref_class():
+            if coref_id not in matchingMention.in_coref_class:
                 matchingMention.in_coref_class.append(coref_id)
 
 def identify_appositive_structures(mentions, coref_classes):
@@ -276,8 +276,8 @@ def identify_appositive_structures(mentions, coref_classes):
     :return: None (mentions and coref_classes objects are updated)
     '''
     for mid, mention in mentions.items():
-        if len(mention.get_appositives()) > 0:
-            for appositive in mention.get_appositives():
+        if len(mention.appositives) > 0:
+            for appositive in mention.appositives:
                 matching_mentions = identify_span_matching_mention(appositive, mid, mentions)
                 if len(matching_mentions) > 0:
                     update_matching_mentions(mentions, matching_mentions, mention, coref_classes)
@@ -290,8 +290,8 @@ def identify_predicative_structures(mentions, coref_classes):
     :return: None (mentions and coref_classes objects are updated)
     '''
     for mid, mention in mentions.items():
-        if len(mention.get_predicatives()) > 0:
-            for predicative in mention.get_predicatives():
+        if len(mention.predicatives) > 0:
+            for predicative in mention.predicatives:
                 matching_mentions = identify_span_matching_mention(predicative, mid, mentions)
                 if len(matching_mentions) > 0:
                     update_matching_mentions(mentions, matching_mentions, mention, coref_classes)
@@ -320,8 +320,8 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
         if mention.is_relative_pronoun():
             matching = []
             for om, othermention in mentions.items():
-                if not om == m and not mention.head_offset in othermention.get_span():
-                    for mod in othermention.get_modifiers():
+                if not om == m and mention.head_offset not in othermention.span:
+                    for mod in othermention.modifiers:
                         if mention.head_offset in mod:
                             matching.append(om)
             if len(matching) == 1:
@@ -341,10 +341,10 @@ def resolve_reflective_pronoun_structures(mentions, coref_classes):
     for m, mention in mentions.items():
         if mention.is_reflective_pronoun():
             matching = []
-            sent_nr = mention.get_sentence_number()
+            sent_nr = mention.sentence_number
             for om, othermention in mentions.items():
-                if othermention.get_sentence_number() == sent_nr:
-                    if not om == m and mention.head_offset not in othermention.get_span():
+                if othermention.sentence_number == sent_nr:
+                    if not om == m and mention.head_offset not in othermention.span:
                         if int(othermention.head_offset) < mention.head_offset:
                             matching.append(om)
             if len(matching) == 1:
@@ -366,13 +366,13 @@ def identify_acronyms_or_alternative_names(mentions, coref_classes):
     '''
     #FIXME input specific
     for m, mention in mentions.items():
-        if mention.get_entity_type() in ['PER','ORG','LOC','MISC'] and len(mention.get_modifiers()) > 0:
+        if mention.entity_type in ['PER', 'ORG', 'LOC', 'MISC'] and len(mention.modifiers) > 0:
             final_matches = []
-            for mod in mention.get_modifiers():
+            for mod in mention.modifiers:
                 matching_mentions = identify_span_matching_mention(mod, m, mentions)
                 for matchid in matching_mentions:
                     mymatch = mentions.get(matchid)
-                    if mymatch.get_entity_type() in ['PER','ORG','LOC','MISC']:
+                    if mymatch.entity_type in ['PER', 'ORG', 'LOC', 'MISC']:
                         final_matches.append(matchid)
             if len(final_matches) > 0:
                 update_matching_mentions(mentions, final_matches, mention, coref_classes)
@@ -383,7 +383,7 @@ def get_sentence_mentions(mentions):
     sentenceMentions = defaultdict(list)
 
     for mid, mention in mentions.items():
-        snr = mention.get_sentence_number()
+        snr = mention.sentence_number
         sentenceMentions[snr].append(mid)
 
     return sentenceMentions
@@ -429,12 +429,13 @@ def find_strict_head_antecedents(mention, mentions, sieve):
     :return: list of antecedent ids
     '''
     head_string = id2string.get(mention.head_offset)
-    non_stop_words = get_string_from_ids(mention.get_no_stop_words())
-    main_mods = get_string_from_ids(mention.get_main_modifiers())
+    non_stop_words = get_string_from_ids(mention.no_stop_words)
+    main_mods = get_string_from_ids(mention.main_modifiers)
     antecedents = []
     for mid, comp_mention in mentions.items():
         #offset must be smaller to be antecedent and not i-to-i
-        if comp_mention.head_offset < mention.head_offset and not mention.head_offset <= comp_mention.get_end_offset():
+        if comp_mention.head_offset < mention.head_offset and \
+           not mention.head_offset <= comp_mention.end_offset:
             if head_string == id2string.get(comp_mention.head_offset):
                 match = True
                 full_span = get_string_from_ids(comp_mention.span)
@@ -456,7 +457,7 @@ def apply_strict_head_match(mentions, coref_classes, sieve='5'):
 
     #FIXME: parser specific check for pronoun
     for mention in mentions.values():
-        if not mention.get_head_pos() == 'pron':
+        if not mention.head_pos == 'pron':
             antecedents = find_strict_head_antecedents(mention, mentions, sieve)
             if len(antecedents) > 0:
                 update_matching_mentions(mentions, antecedents, mention, coref_classes)
@@ -491,19 +492,19 @@ def find_head_match_coreferents(mention, mentions):
     :return: list of mention coreferents
     '''
 
-    boffset = mention.get_begin_offset()
-    eoffset = mention.get_end_offset()
-    full_head_string = get_string_from_ids(mention.get_full_head())
+    boffset = mention.begin_offset
+    eoffset = mention.end_offset
+    full_head_string = get_string_from_ids(mention.full_head)
     contains_numbers = contains_number(mention.span)
 
     coreferents = []
 
     for mid, comp_mention in mentions.items():
-        if not mid == mention.id and comp_mention.get_entity_type() in ['PER','ORG','LOC']:
+        if mid != mention.id and comp_mention.entity_type in ['PER', 'ORG', 'LOC']:
             #mention may not be included in other mention
-            if not comp_mention.get_begin_offset() <= boffset and comp_mention.get_end_offset() >= eoffset:
+            if not comp_mention.begin_offset <= boffset and comp_mention.end_offset >= eoffset:
                 match = True
-                comp_string = get_string_from_ids(comp_mention.get_full_head())
+                comp_string = get_string_from_ids(comp_mention.full_head)
                 for word in full_head_string.split():
                     if not word in comp_string:
                         match = False
@@ -521,7 +522,7 @@ def apply_proper_head_word_match(mentions, coref_classes):
 
     #FIXME: tool specific output for entity type
     for mention in mentions.values():
-        if mention.get_entity_type() in ['PER','ORG','LOC','MISC']:
+        if mention.entity_type in ['PER', 'ORG', 'LOC', 'MISC']:
             coreferents = find_head_match_coreferents(mention, mentions)
             if len(coreferents) > 0:
                 update_matching_mentions(mentions, coreferents, mention, coref_classes)
@@ -536,17 +537,17 @@ def find_relaxed_head_antecedents(mention, mentions):
     :return:
     '''
 
-    boffset = mention.get_begin_offset()
-    full_head_string = get_string_from_ids(mention.get_full_head())
-    non_stop_words = get_string_from_ids(mention.get_no_stop_words())
+    boffset = mention.begin_offset
+    full_head_string = get_string_from_ids(mention.full_head)
+    non_stop_words = get_string_from_ids(mention.no_stop_words)
     antecedents = []
 
     for mid, comp_mention in mentions.items():
         #we want only antecedents
-        if comp_mention.get_end_offset() < boffset:
-            if comp_mention.get_entity_type() == mention.get_entity_type():
+        if comp_mention.end_offset < boffset:
+            if comp_mention.entity_type == mention.entity_type:
                 match = True
-                full_comp_head = get_string_from_ids(comp_mention.get_full_head())
+                full_comp_head = get_string_from_ids(comp_mention.full_head)
                 for word in full_head_string.split():
                     if not word in full_comp_head:
                         match = False
@@ -589,14 +590,14 @@ def is_compatible(string1, string2):
 
 def check_compatibility(mention1, mention2):
 
-    if not is_compatible(mention1.get_number(), mention2.get_number()):
+    if not is_compatible(mention1.number, mention2.number):
         return False
-    if not is_compatible(mention1.get_gender(), mention2.get_gender()):
+    if not is_compatible(mention1.gender, mention2.gender):
         return False
     #speaker/addressee 1/2 person was taken care of earlier on
-    if not is_compatible(mention1.get_person(), mention2.get_person()):
+    if not is_compatible(mention1.person, mention2.person):
         return False
-    if not is_compatible(mention1.get_entity_type(), mention2.get_entity_type()):
+    if not is_compatible(mention1.entity_type, mention2.entity_type):
         return False
 
     return True
@@ -605,10 +606,10 @@ def check_compatibility(mention1, mention2):
 def get_candidates_and_distance(mention, mentions):
 
     candidates = {}
-    sent_nr = mention.get_sentence_number()
+    sent_nr = mention.sentence_number
     for mid, comp_mention in mentions.items():
         if mention.head_offset > comp_mention.head_offset:
-            csnr = comp_mention.get_sentence_number()
+            csnr = comp_mention.sentence_number
             #only consider up to 3 preceding sentences
             if csnr <= sent_nr <= csnr + 3:
                 #check if not prohibited
@@ -645,7 +646,7 @@ def resolve_pronoun_coreference(mentions, coref_classes):
 
     for mention in mentions.values():
         #we only deal with unresolved pronouns here
-        if mention.get_head_pos() == 'pron' and len(mention.in_coref_class) == 0:
+        if mention.head_pos == 'pron' and len(mention.in_coref_class) == 0:
             antecedent = identify_antecedent(mention, mentions)
             if antecedent is not None:
                 update_matching_mentions(mentions, [antecedent], mention, coref_classes)

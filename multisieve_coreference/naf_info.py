@@ -104,18 +104,18 @@ def merge_two_mentions(mention1, mention2):
     if mention1.head_offset == mention2.head_offset:
         if set(mention1.span) == set(mention2.span):
             # if mention1 does not have entity type, take the one from entity 2
-            if mention2.get_entity_type() is None:
-                mention2.set_entity_type(mention1.get_entity_type())
+            if mention2.entity_type is None:
+                mention2.entity_type = mention1.entity_type
         else:
             # if mention2 has no entity type, it's span is syntax based
             # (rather than from the NERC module)
-            if mention1.get_entity_type() is None:
-                mention2.set_span(mention1.get_span())
+            if mention1.entity_type is None:
+                mention2.span = mention1.span
     else:
-        if mention1.get_entity_type() is None:
-            mention2.set_head_id(mention1.get_head_id())
+        if mention1.entity_type is None:
+            mention2.head_offset = mention1.head_offset
         else:
-            mention2.set_entity_type(mention1.get_entity_type())
+            mention2.entity_type = mention1.entity_type
 
     return mention2
 
@@ -170,7 +170,7 @@ def get_mentions(nafobj):
     for entity, constituent in entities.items():
         mid = 'm' + str(len(mentions))
         mention = create_mention(nafobj, constituent, entity, mid)
-        mention.set_entity_type(constituent.etype)
+        mention.entity_type = constituent.etype
         mentions[mid] = mention
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -664,24 +664,24 @@ def create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qu
     myQuote = Cquotation(quote_id)
 
     quotespan = convert_term_ids_to_offsets(nafobj, nafquotation.span)
-    myQuote.set_span(quotespan)
+    myQuote.span = quotespan
 
     quotestring = get_string_of_span(nafobj, nafquotation.span)
-    myQuote.set_string(quotestring)
+    myQuote.string = quotestring
 
     beginoffset, endoffset = get_offsets_from_span(nafobj, nafquotation.span)
-    myQuote.set_begin_offset(beginoffset)
-    myQuote.set_end_offset(endoffset)
+    myQuote.begin_offset = beginoffset
+    myQuote.end_offset = endoffset
 
     if len(nafquotation.source) > 0:
         source_mention_id = link_span_ids_to_mentions(nafquotation.source, mentions)
-        myQuote.set_source(source_mention_id)
+        myQuote.source = source_mention_id
     if len(nafquotation.addressee) > 0:
         addressee_mention_id = link_span_ids_to_mentions(nafquotation.addressee, mentions)
-        myQuote.set_addressee(addressee_mention_id)
+        myQuote.addressee = addressee_mention_id
     if len(nafquotation.topic) > 0:
         topic_mention_id = link_span_ids_to_mentions(nafquotation.topic, mentions)
-        myQuote.set_topic(topic_mention_id)
+        myQuote.topic = topic_mention_id
 
     return myQuote
 
