@@ -8,7 +8,6 @@ logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 def add_coreference_to_naf(nafobj, corefclasses, mentions):
 
-    # FIXME: (detail) for readability, add coreference chains in order
     start_count = get_starting_count(nafobj)
     coref_according_to_index = get_ordered_coreference_chains(
         corefclasses,
