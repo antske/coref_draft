@@ -55,7 +55,7 @@ class Cmention:
         self.in_coref_class = []    # confirmed
         self.entity_type = None
         self.in_quotation = False
-        self.relative_pron = False
+        self.relative_pron = False  ## TODO!
         self.reflective_pron = False
         self.coreference_prohibited = []
         self.begin_offset = ''
@@ -280,15 +280,13 @@ def create_mention(nafobj, constituentInfo, head, mid):
     span = constituentInfo.span
     offset_ids_span = convert_term_ids_to_offsets(nafobj, span)
     mention = Cmention(mid, span=offset_ids_span, head_offset=head_offset)
-    sentence_number = get_sentence_number(nafobj, head)
-    mention.set_sentence_number(sentence_number)
+    mention.sentence_number = get_sentence_number(nafobj, head)
     # add no stop words and main modifiers
     add_non_stopwords(nafobj, span, mention)
     add_main_modifiers(nafobj, span, mention)
     # mwe info
     full_head_tids = constituentInfo.multiword
-    full_head_span = convert_term_ids_to_offsets(nafobj, full_head_tids)
-    mention.set_full_head(full_head_span)
+    mention.full_head = convert_term_ids_to_offsets(nafobj, full_head_tids)
     # modifers and appositives:
     relaxed_span = offset_ids_span
     for mod_in_tids in constituentInfo.modifiers:
@@ -303,7 +301,7 @@ def create_mention(nafobj, constituentInfo, head, mid):
         for mid in app_span:
             if mid > head_offset and mid in relaxed_span:
                 relaxed_span.remove(mid)
-    mention.set_relaxed_span(relaxed_span)
+    mention.relaxed_span = relaxed_span
 
     for pred_in_tids in constituentInfo.predicatives:
         pred_span = convert_term_ids_to_offsets(nafobj, pred_in_tids)
@@ -315,13 +313,13 @@ def create_mention(nafobj, constituentInfo, head, mid):
     # set pos of head
     if head is not None:
         head_pos = get_pos_of_term(nafobj, head)
-        mention.set_head_pos(head_pos)
+        mention.head_pos = head_pos
         if head_pos in ['pron', 'noun', 'name']:
             analyze_nominal_information(nafobj, head, mention)
 
     begin_offset, end_offset = get_offsets_from_span(nafobj, span)
-    mention.set_begin_offset(begin_offset)
-    mention.set_end_offset(end_offset)
+    mention.begin_offset = begin_offset
+    mention.end_offset = end_offset
 
     return mention
 
@@ -342,7 +340,7 @@ def add_main_modifiers(nafobj, span, mention):
             main_mods.append(tid)
 
     main_mods_offset = convert_term_ids_to_offsets(nafobj, main_mods)
-    mention.set_main_modifiers(main_mods_offset)
+    mention.main_modifiers = main_mods_offset
 
 
 def add_non_stopwords(nafobj, span, mention):
@@ -361,7 +359,7 @@ def add_non_stopwords(nafobj, span, mention):
             non_stop_terms.append(tid)
 
     non_stop_span = convert_term_ids_to_offsets(nafobj, non_stop_terms)
-    mention.set_no_stop_words(non_stop_span)
+    mention.no_stop_words = non_stop_span
 
 
 def analyze_nominal_information(nafobj, term_id, mention):
@@ -387,40 +385,40 @@ def get_sentence_number(nafobj, head):
 def identify_and_set_person(morphofeat, mention):
 
     if '1' in morphofeat:
-        mention.set_person('1')
+        mention.person = '1'
     elif '2' in morphofeat:
-        mention.set_person('2')
+        mention.person = '2'
     elif '3' in morphofeat:
-        mention.set_person('3')
+        mention.person = '3'
 
 
 def identify_and_set_number(morphofeat, myterm, mention):
 
     if 'ev' in morphofeat:
-        mention.set_number('ev')
+        mention.number = 'ev'
     elif 'mv' in morphofeat:
-        mention.set_number('mv')
+        mention.number = 'mv'
     elif 'getal' in morphofeat:
         lemma = myterm.get_lemma()
         if lemma in ['haar', 'zijn', 'mijn', 'jouw', 'je']:
-            mention.set_number('ev')
+            mention.number = 'ev'
         elif lemma in ['ons', 'jullie', 'hun']:
-            mention.set_number('mv')
+            mention.number = 'mv'
 
 
 def identify_and_set_gender(morphofeat, mention):
 
     if 'fem' in morphofeat:
-        mention.set_gender('fem')
+        mention.gender = 'fem'
     elif 'masc' in morphofeat:
-        mention.set_gender('masc')
+        mention.gender = 'masc'
     elif 'onz,' in morphofeat:
-        mention.set_gender('neut')
+        mention.gender = 'neut'
 
 
 def set_is_relative_pronoun(morphofeat, mention):
 
     if 'betr,' in morphofeat:
-        mention.set_relative_pronoun(True)
+        mention.relative_pron = True
     if 'refl,' in morphofeat:
-        mention.set_reflective_pronoun(True)
+        mention.reflective_pron = True
