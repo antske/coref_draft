@@ -49,8 +49,8 @@ class Cmention:
             in_coref_class=None,
             entity_type=None,
             in_quotation=False,
-            relative_pron=False,
-            reflective_pron=False,
+            is_relative_pronoun=False,
+            is_reflective_pronoun=False,
             coreference_prohibited=None,
             modifiers=None,
             appositives=None,
@@ -75,8 +75,8 @@ class Cmention:
         :type in_coref_class:          list
         :type entity_type:             str
         :type in_quotation:            bool
-        :type relative_pron:           bool
-        :type reflective_pron:         bool
+        :type is_relative_pronoun:           bool
+        :type is_reflective_pronoun:         bool
         :type coreference_prohibited:  list
         :type begin_offset:            str
         :type end_offset:              str
@@ -119,8 +119,8 @@ class Cmention:
         self.entity_type = entity_type
 
         self.in_quotation = in_quotation
-        self.relative_pron = relative_pron  # TODO!
-        self.reflective_pron = reflective_pron
+        self.is_relative_pronoun = is_relative_pronoun  # TODO!
+        self.is_reflective_pronoun = is_reflective_pronoun
 
     def __repr__(self):
         return self.__class__.__name__ + '(' + \
@@ -136,8 +136,8 @@ class Cmention:
             'in_coref_class={self.in_coref_class!r}, ' \
             'entity_type={self.entity_type!r}, ' \
             'in_quotation={self.in_quotation!r}, ' \
-            'relative_pron={self.relative_pron!r}, ' \
-            'reflective_pron={self.reflective_pron!r}, ' \
+            'is_relative_pronoun={self.is_relative_pronoun!r}, ' \
+            'is_reflective_pronoun={self.is_reflective_pronoun!r}, ' \
             'coreference_prohibited={self.coreference_prohibited!r}, ' \
             'modifiers={self.modifiers!r}, ' \
             'appositives={self.appositives!r}, ' \
@@ -149,14 +149,6 @@ class Cmention:
 
     def add_relaxed_span_id(self, rsid):
         self.relaxed_span.append(rsid)
-
-    def is_relative_pronoun(self):
-
-        return self.relative_pron
-
-    def is_reflective_pronoun(self):
-
-        return self.reflective_pron
 
     def add_modifier(self, mod):
 
@@ -333,6 +325,6 @@ def identify_and_set_gender(morphofeat, mention):
 def set_is_relative_pronoun(morphofeat, mention):
 
     if 'betr,' in morphofeat:
-        mention.relative_pron = True
+        mention.is_relative_pronoun = True
     if 'refl,' in morphofeat:
-        mention.reflective_pron = True
+        mention.is_reflective_pronoun = True

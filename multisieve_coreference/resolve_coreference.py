@@ -317,7 +317,7 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
     :return: None (mentions and coref_classes are updated)
     '''
     for m, mention in mentions.items():
-        if mention.is_relative_pronoun():
+        if mention.is_relative_pronoun:
             matching = []
             for om, othermention in mentions.items():
                 if not om == m and mention.head_offset not in othermention.span:
@@ -339,7 +339,7 @@ def resolve_reflective_pronoun_structures(mentions, coref_classes):
     :return:
     '''
     for m, mention in mentions.items():
-        if mention.is_reflective_pronoun():
+        if mention.is_reflective_pronoun:
             matching = []
             sent_nr = mention.sentence_number
             for om, othermention in mentions.items():
