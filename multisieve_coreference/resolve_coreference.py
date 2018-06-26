@@ -34,11 +34,13 @@ def get_string_from_ids(id_span):
     return surface_string.rstrip()
 
 
-def match_full_name_overlap(mentions, coref_classes):
+def match_some_span(mentions, coref_classes, get_span):
     '''
     Function that places entities with full string match in the same coreference group
-    :param mentions: dictionary of mention objects (key is mention id)
-    :return:
+    :param mentions: dictionary of all available mention objects (key is
+                     mention id)
+    :param coref_classes: dictionary of coreference classes (key is class id)
+    :param get_span: function that returns a span given a `Cmention` object.
     '''
     found_entities = {}
 
@@ -46,7 +48,7 @@ def match_full_name_overlap(mentions, coref_classes):
     #FIXME 2: now only surface strings, we may want to look at lemma matches as well
     for mid, mention in mentions.items():
         if mention.head_pos in ['name', 'noun']:
-            mention_string = get_string_from_ids(mention.span)
+            mention_string = get_string_from_ids(get_span(mention))
             if mention_string in found_entities:
                 coref_id = found_entities.get(mention_string)
                 if coref_id not in mention.in_coref_class:
@@ -63,30 +65,25 @@ def match_full_name_overlap(mentions, coref_classes):
                 found_entities[mention_string] = coref_nr
 
 
+def match_full_name_overlap(mentions, coref_classes):
+    '''
+    Function that places entities with full string match in the same
+    coreference group
+    :param mentions: dictionary of all available mention objects (key is
+                     mention id)
+    :param coref_classes: dictionary of coreference classes (key is class id)
+    '''
+    match_some_span(mentions, coref_classes, lambda m: m.span)
+
+
 def match_relaxed_string(mentions, coref_classes):
     '''
     Function that matches mentions which have the same relaxed head
-    :param mentions: all available mentions
-    :param coref_classes: coreference classes
-    :return:
+    :param mentions: dictionary of all available mention objects (key is
+                     mention id)
+    :param coref_classes: dictionary of coreference classes (key is class id)
     '''
-    found_relaxed_strings = {}
-    for mid, mention in mentions.items():
-        if mention.head_pos in ['name', 'noun']:
-            relaxed_string = get_string_from_ids(mention.relaxed_span)
-            if relaxed_string in found_relaxed_strings:
-                coref_id = found_relaxed_strings.get(relaxed_string)
-                if coref_id not in mention.in_coref_class:
-                    mention.in_coref_class.append(coref_id)
-                    coref_classes[coref_id].add(mention.id)
-            else:
-                if len(mention.in_coref_class) > 0:
-                    coref_nr = mention.in_coref_class[0]
-                else:
-                    coref_nr = len(coref_classes)
-                    mention.in_coref_class.append(coref_nr)
-                coref_classes[coref_nr].add(mention.id)
-                found_relaxed_strings[relaxed_string] = coref_nr
+    match_some_span(mentions, coref_classes, lambda m: m.relaxed_span)
 
 
 def update_coref_class(coref_class, current_mention, coref_mention):
