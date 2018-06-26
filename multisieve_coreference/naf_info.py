@@ -95,7 +95,7 @@ def merge_two_mentions(mention1, mention2):
     '''
     # FIXME; The comments here do not correspond to the code and therefore the
     #        code may be horribly wrong.
-    if mention1.head_id == mention2.head_id:
+    if mention1.head_offset == mention2.head_offset:
         if set(mention1.span) == set(mention2.span):
             # if mention1 does not have entity type, take the one from entity 2
             if mention2.get_entity_type() is None:
@@ -128,7 +128,7 @@ def merge_mentions(mentions):
     for m, val in mentions.items():
         found = False
         for prevm, preval in final_mentions.items():
-            if val.head_id == preval.head_id:
+            if val.head_offset == preval.head_offset:
                 updated_mention = merge_two_mentions(val, preval)
                 final_mentions[prevm] = updated_mention
                 found = True

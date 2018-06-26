@@ -306,7 +306,7 @@ def get_closest_match_relative_pronoun(mentions, matching, mention_index):
     candidates = {}
     for mid in matching:
         mention = mentions.get(mid)
-        offset = mention.head_id
+        offset = mention.head_offset
         candidates[mention] = offset
     antecedent = identify_closest_candidate(mention_index, candidates)
     return antecedent
@@ -324,14 +324,14 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
         if mention.is_relative_pronoun():
             matching = []
             for om, othermention in mentions.items():
-                if not om == m and not mention.head_id in othermention.get_span():
+                if not om == m and not mention.head_offset in othermention.get_span():
                     for mod in othermention.get_modifiers():
-                        if mention.head_id in mod:
+                        if mention.head_offset in mod:
                             matching.append(om)
             if len(matching) == 1:
                 update_matching_mentions(mentions, matching, mention, coref_classes)
             elif len(matching) > 1:
-                mention_index = mention.head_id
+                mention_index = mention.head_offset
                 my_match = get_closest_match_relative_pronoun(mentions, matching, mention_index)
                 update_matching_mentions(mentions, [my_match.id], mention, coref_classes)
 
@@ -348,13 +348,13 @@ def resolve_reflective_pronoun_structures(mentions, coref_classes):
             sent_nr = mention.get_sentence_number()
             for om, othermention in mentions.items():
                 if othermention.get_sentence_number() == sent_nr:
-                    if not om == m and not mention.head_id in othermention.get_span():
-                        if int(othermention.head_id) < mention.head_id:
+                    if not om == m and mention.head_offset not in othermention.get_span():
+                        if int(othermention.head_offset) < mention.head_offset:
                             matching.append(om)
             if len(matching) == 1:
                 update_matching_mentions(mentions, matching, mention, coref_classes)
             elif len(matching) > 1:
-                mention_index = mention.head_id
+                mention_index = mention.head_offset
                 my_match = get_closest_match_relative_pronoun(mentions, matching, mention_index)
                 update_matching_mentions(mentions, [my_match.id], mention, coref_classes)
 
@@ -432,14 +432,14 @@ def find_strict_head_antecedents(mention, mentions, sieve):
     :param mentions: dictionary of all mentions
     :return: list of antecedent ids
     '''
-    head_string = id2string.get(mention.head_id)
+    head_string = id2string.get(mention.head_offset)
     non_stop_words = get_string_from_ids(mention.get_no_stop_words())
     main_mods = get_string_from_ids(mention.get_main_modifiers())
     antecedents = []
     for mid, comp_mention in mentions.items():
         #offset must be smaller to be antecedent and not i-to-i
-        if comp_mention.head_id < mention.head_id and not mention.head_id <= comp_mention.get_end_offset():
-            if head_string == id2string.get(comp_mention.head_id):
+        if comp_mention.head_offset < mention.head_offset and not mention.head_offset <= comp_mention.get_end_offset():
+            if head_string == id2string.get(comp_mention.head_offset):
                 match = True
                 full_span = get_string_from_ids(comp_mention.span)
                 if sieve in ['5','7']:
@@ -611,14 +611,14 @@ def get_candidates_and_distance(mention, mentions):
     candidates = {}
     sent_nr = mention.get_sentence_number()
     for mid, comp_mention in mentions.items():
-        if mention.head_id > comp_mention.head_id:
+        if mention.head_offset > comp_mention.head_offset:
             csnr = comp_mention.get_sentence_number()
             #only consider up to 3 preceding sentences
             if csnr <= sent_nr <= csnr + 3:
                 #check if not prohibited
                 if not mid in mention.coreference_prohibited:
                     if check_compatibility(mention, comp_mention):
-                        candidates[mid] = comp_mention.head_id
+                        candidates[mid] = comp_mention.head_offset
 
     return candidates
 
@@ -639,7 +639,7 @@ def identify_closest_candidate(mention_index, candidates):
 def identify_antecedent(mention, mentions):
 
     candidates = get_candidates_and_distance(mention, mentions)
-    mention_index = mention.head_id
+    mention_index = mention.head_offset
     antecedent = identify_closest_candidate(mention_index, candidates)
 
     return antecedent

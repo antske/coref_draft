@@ -23,7 +23,7 @@ def add_coreference_to_naf(nafobj, corefclasses, mentions):
                     get_terms_from_offsets(
                         nafobj,
                         mention.span,
-                        mention.head_id
+                        mention.head_offset
                     )
                     for mention in map(mentions.get, mids)
                 )
@@ -69,8 +69,8 @@ def get_ordered_coreference_chains(corefclasses, mentions):
             first_index = 90000000000
             for mid in mids:
                 mention = mentions.get(mid)
-                if mention.head_id < first_index:
-                    first_index = mention.head_id
+                if mention.head_offset < first_index:
+                    first_index = mention.head_offset
             coref_dict[first_index] = mids
 
     return coref_dict

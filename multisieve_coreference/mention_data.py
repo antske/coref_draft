@@ -32,7 +32,7 @@ class Cmention:
     This class covers information about mentions that is relevant for coreference resoltion
     '''
 
-    def __init__(self, mid, span=None, head_id=None, head_pos=None):
+    def __init__(self, mid, span=None, head_offset=None, head_pos=None):
         '''
         Constructor of the mention
         #TODO: revise so that provides information needed for some sieve;
@@ -45,7 +45,7 @@ class Cmention:
         self.number = ''
         self.gender = ''
         self.person = ''
-        self.head_id = head_id
+        self.head_offset = head_offset
         self.full_head = []
         self.head_pos = head_pos
         self.relaxed_span = []
@@ -71,7 +71,7 @@ class Cmention:
             'number={!r}, '.format(self.number) + \
             'gender={!r}, '.format(self.gender) + \
             'person={!r}, '.format(self.person) + \
-            'head_id={!r}, '.format(self.head_id) + \
+            'head_offset={!r}, '.format(self.head_offset) + \
             'full_head={!r}, '.format(self.full_head) + \
             'head_pos={!r}, '.format(self.head_pos) + \
             'relaxed_span={!r}, '.format(self.relaxed_span) + \
@@ -118,10 +118,10 @@ class Cmention:
         return self.gender
 
     def set_head_id(self, hid):
-        self.head_id = hid
+        self.head_offset = hid
 
     def get_head_id(self):
-        return self.head_id
+        return self.head_offset
 
     def set_full_head(self, full_head):
         self.full_head = full_head
@@ -266,20 +266,17 @@ def create_mention(nafobj, constituentInfo, head, mid):
     '''
     Function that creates mention object from naf information
     :param nafobj: the input naffile
-    :param span: the mention span
-    :param span: the id of the constituent's head
-    :param idnr: the idnr (for creating a unique mention id
+    :param constituentInfo: information about the constituent
+    :param head: the id of the constituent's head
+    :param mid: the mid (for creating a unique mention id
     :return:
     '''
 
-    if head is None:
-        head_id = head
-    else:
-        head_id = get_offset(nafobj, head)
+    head_offset = None if head is None else get_offset(nafobj, head)
 
     span = constituentInfo.span
     offset_ids_span = convert_term_ids_to_offsets(nafobj, span)
-    mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
+    mention = Cmention(mid, span=offset_ids_span, head_offset=head_offset)
     sentence_number = get_sentence_number(nafobj, head)
     mention.set_sentence_number(sentence_number)
     # add no stop words and main modifiers
@@ -295,13 +292,13 @@ def create_mention(nafobj, constituentInfo, head, mid):
         mod_span = convert_term_ids_to_offsets(nafobj, mod_in_tids)
         mention.add_modifier(mod_span)
         for mid in mod_span:
-            if mid > head_id and mid in relaxed_span:
+            if mid > head_offset and mid in relaxed_span:
                 relaxed_span.remove(mid)
     for app_in_tids in constituentInfo.appositives:
         app_span = convert_term_ids_to_offsets(nafobj, app_in_tids)
         mention.add_appositive(app_span)
         for mid in app_span:
-            if mid > head_id and mid in relaxed_span:
+            if mid > head_offset and mid in relaxed_span:
                 relaxed_span.remove(mid)
     mention.set_relaxed_span(relaxed_span)
 
