@@ -205,19 +205,14 @@ def clean_up_coref_classes(coref_classes, mentions):
     grouped_merge_list = merge_merge_list(to_merge)
 
     for merges in grouped_merge_list:
-        overall_id = min(merges)
-        if coref_classes.get(overall_id) is not None:
-            for cid in merges:
-                if cid != overall_id:
-                    # FIXME; check when this is happening and whether it leads to missing coreferences
-                    if coref_classes.get(cid) is not None:
-                        coref_classes[overall_id] = coref_classes[overall_id] | coref_classes.get(cid)
-                        coref_classes[cid] = None
-            new_set = coref_classes.get(overall_id)
+        merges = sorted(merges)
+        overall_id = merges[0]
+        for cid in merges[1:]:
+            coref_classes[overall_id] |= coref_classes.pop(cid)
+
         # reset mention coreference class to selected id
-            for mention_id in new_set:
-                my_mention = mentions.get(mention_id)
-                my_mention.in_coref_class = [overall_id]
+        for mention_id in coref_classes[overall_id]:
+            mentions[mention_id].in_coref_class = [overall_id]
 
 
 def identify_span_matching_mention(span, mid, mentions):
