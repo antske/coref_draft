@@ -568,7 +568,7 @@ def find_relaxed_head_antecedents(mention, mentions):
 def apply_relaxed_head_match(mentions, coref_classes):
 
     for mention in mentions.values():
-        if mention.get_entity_type in ['PER','ORG','LOC','MISC']:
+        if mention.entity_type in ['PER', 'ORG', 'LOC', 'MISC']:
             antecedents = find_relaxed_head_antecedents(mention, mentions)
             if len(antecedents) > 0:
                 update_matching_mentions(mentions, antecedents, mention, coref_classes)
