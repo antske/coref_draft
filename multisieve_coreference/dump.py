@@ -1,4 +1,9 @@
+import logging
+
 from KafNafParserPy import Cspan, Ctarget, Ccoreference
+
+
+logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 
 def add_coreference_to_naf(nafobj, corefclasses, mentions):
@@ -9,6 +14,17 @@ def add_coreference_to_naf(nafobj, corefclasses, mentions):
         corefclasses,
         mentions
     )
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        from .util import view_coref_classes
+        from collections import OrderedDict
+        logger.debug("Coreference classes: {}".format(
+            view_coref_classes(
+                nafobj,
+                OrderedDict(sorted(coref_according_to_index.items())),
+                mentions
+            )
+        ))
+
     for key in sorted(coref_according_to_index):
         mids = coref_according_to_index.get(key)
         if mids is not None:

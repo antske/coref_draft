@@ -670,54 +670,129 @@ def resolve_coreference(nafin):
     mentions = get_mentions(nafin)
     quotations = identify_direct_quotations(nafin, mentions)
 
-    logger.debug(
-        "Mentions: {}".format('\n'.join(map(repr, mentions.values())))
-    )
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        from .util import view_mentions
+        logger.debug(
+            "Mentions just before S1: {}".format(
+                view_mentions(nafin, mentions)
+            )
+        )
 
     logger.info("Sieve 1: Speaker Identification")
     coref_classes = direct_speech_interpretation(quotations, mentions)
     update_mentions(mentions, coref_classes)
+
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        from .util import view_coref_classes
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
 
     logger.info("Sieve 2: String Match")
     match_full_name_overlap(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
+
     logger.info("Sieve 3: Relaxed String Match")
     match_relaxed_string(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
+
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
 
     logger.info("Sieve 4: Precise constructs")
     apply_precise_constructs(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
+
     logger.info("Sieve 5-7: Strict Head Match")
     apply_strict_head_match(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
+
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
 
     logger.info("Sieve 8: Proper Head Word Match")
     apply_proper_head_word_match(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
 
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
+
     logger.info("Sieve 9: Relaxed Head Match")
     apply_relaxed_head_match(mentions, coref_classes)
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
+
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
 
     logger.info("Sieve 10")
 
     logger.info("Add coreferences prohibitions")
     add_coref_prohibitions(mentions, coref_classes)
 
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
+
     logger.info("Resolve relative pronoun coreferences")
     resolve_pronoun_coreference(mentions, coref_classes)
 
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
+
     clean_up_coref_classes(coref_classes, mentions)
     update_mentions(mentions, coref_classes)
+
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logger.debug(
+            "Coreference classes: {}".format(
+                view_coref_classes(nafin, coref_classes, mentions)
+            )
+        )
 
     return coref_classes, mentions
 
@@ -728,6 +803,7 @@ def process_coreference(nafin):
     Note that coreferences are added in place, and the NAF is returned for convenience
     """
     coref_classes, mentions = resolve_coreference(nafin)
+    logger.info("Adding coreference information to NAF...")
     add_coreference_to_naf(nafin, coref_classes, mentions)
     return nafin
     

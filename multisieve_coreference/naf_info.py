@@ -50,7 +50,13 @@ def get_mention_spans(nafobj):
                     (head id, full head, modifiers, complete constituent)
     '''
     mention_heads = get_relevant_head_ids(nafobj)
+    logger.debug("Mention candidate heads: {!r}".format(mention_heads))
     mention_constituents = get_constituents(mention_heads)
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        import itertools as it
+        logger.debug("Mention candidate constituents: {}".format('\n'.join(
+            it.starmap('{}: {!r}'.format, mention_constituents.items())
+        )))
     return mention_constituents
 
 
@@ -166,6 +172,12 @@ def get_mentions(nafobj):
         mention = create_mention(nafobj, constituent, entity, mid)
         mention.set_entity_type(constituent.etype)
         mentions[mid] = mention
+
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        from .util import view_mentions
+        logger.debug(
+            "Mentions before merging: {}".format(view_mentions(nafobj, mentions))
+        )
 
     mentions = merge_mentions(mentions)
 
