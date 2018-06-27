@@ -265,33 +265,53 @@ def update_matching_mentions(mentions, matches, mention1, coref_classes):
             if coref_id not in matchingMention.in_coref_class:
                 matchingMention.in_coref_class.append(coref_id)
 
+
+def identify_some_structures(mentions, coref_classes, get_structures):
+    """
+    Assigns coreference for some structures in place
+
+    :param mentions:       dictionary of all available mention objects (key is
+                           mention id)
+    :param coref_classes:  dictionary of coreference classes (key is class id)
+    :param get_structures: function that returns a list of spans given a
+                           `Cmention` object.
+    """
+    for mid, mention in mentions.items():
+        structures = get_structures(mention)
+        for structure in structures:
+            matching_mentions = identify_span_matching_mention(
+                structure,
+                mid,
+                mentions
+            )
+            if len(matching_mentions) > 0:
+                update_matching_mentions(
+                    mentions,
+                    matching_mentions,
+                    mention,
+                    coref_classes
+                )
+
+
 def identify_appositive_structures(mentions, coref_classes):
     '''
-    Assigns coreference for appositive structures
-    :param mentions: mentions dictionary
-    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
-    :return: None (mentions and coref_classes objects are updated)
+    Assigns coreference for appositive structures in place
+
+    :param mentions:       dictionary of all available mention objects (key is
+                           mention id)
+    :param coref_classes:  dictionary of coreference classes (key is class id)
     '''
-    for mid, mention in mentions.items():
-        if len(mention.appositives) > 0:
-            for appositive in mention.appositives:
-                matching_mentions = identify_span_matching_mention(appositive, mid, mentions)
-                if len(matching_mentions) > 0:
-                    update_matching_mentions(mentions, matching_mentions, mention, coref_classes)
+    identify_some_structures(mentions, coref_classes, lambda m: m.appositives)
+
 
 def identify_predicative_structures(mentions, coref_classes):
     '''
-    Assigns coreference for predicative structures
-    :param mentions: dictoinary of mentions
-    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
-    :return: None (mentions and coref_classes objects are updated)
+    Assigns coreference for predicative structures in place
+    :param mentions:       dictionary of all available mention objects (key is
+                           mention id)
+    :param coref_classes:  dictionary of coreference classes (key is class id)
     '''
-    for mid, mention in mentions.items():
-        if len(mention.predicatives) > 0:
-            for predicative in mention.predicatives:
-                matching_mentions = identify_span_matching_mention(predicative, mid, mentions)
-                if len(matching_mentions) > 0:
-                    update_matching_mentions(mentions, matching_mentions, mention, coref_classes)
+    identify_some_structures(mentions, coref_classes, lambda m: m.predicatives)
 
 
 def get_closest_match_relative_pronoun(mentions, matching, mention_index):
