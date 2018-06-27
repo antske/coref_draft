@@ -119,28 +119,30 @@ def included_in_direct_speech(quotations, mention, coref_class):
             topic = quote.topic
             if mention.head_pos == 'pron':
                 if mention.person == '1':
-                    if source is not None:
+                    if source:
                         update_coref_class(coref_class, mention, source)
-                    if topic is not None:
+                    if topic:
                         mention.coreference_prohibited.append(topic)
-                    if addressee is not None:
+                    if addressee:
                         mention.coreference_prohibited.append(addressee)
                 elif mention.person == '2':
-                    if source is not None:
+                    if source:
                         mention.coreference_prohibited.append(source)
-                    if topic is not None:
+                    if topic:
                         mention.coreference_prohibited.append(topic)
-                    if addressee is not None:
+                    if addressee:
                         update_coref_class(coref_class, mention, addressee)
                 elif mention.person == '3':
-                    if source is not None:
+                    if source:
                         mention.coreference_prohibited.append(source)
-                    if topic is not None:
+                    if topic:
                         update_coref_class(coref_class, mention, topic)
-                    if addressee is not None:
+                    if addressee:
                         mention.coreference_prohibited.append(addressee)
-            elif source is not None:
+            elif source:
                     mention.coreference_prohibited.append(source)
+                # FIXME this bad indentation could indicate a mistake. Check
+                # with algorithm from paper
                 # TODO once vocative check installed; also prohibit linking
                 # names to speaker
 
