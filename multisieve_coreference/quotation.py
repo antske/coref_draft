@@ -8,13 +8,13 @@ class Cquotation:
         Constructor for quotations object
         '''
         self.sip = sip
-        self.span = []
-        self.string = ''
-        self.beginOffset = ''
-        self.endOffset = ''
-        self.source = ''
-        self.addressee = ''
-        self.topic = ''
+        self.span = None
+        self.string = None
+        self.beginOffset = None
+        self.endOffset = None
+        self.source = None
+        self.addressee = None
+        self.topic = None
 
     def set_span(self, span):
 
