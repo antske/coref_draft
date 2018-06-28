@@ -82,6 +82,7 @@ def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
     for key in orig_dic:
         assert key in indic or (key in keymap and keymap[key] in orig_dic)
         assert orig_dic[key] <= indic[keymap.get(key, key)]
+    event("Final length dictionary: {}".format(len(indic)))
 
 
 @given(dictionaries(text(), sets(text())), sets(frozensets(integers())))
