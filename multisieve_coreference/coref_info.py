@@ -55,19 +55,23 @@ class CoreferenceInformation:
     def referenced_mentions(self):
         return frozenset(it.chain.from_iterable(self.coref_classes.values()))
 
-    def add_coref_class(self, mentions=None):
+    def add_coref_class(self, mentions=None, merge=False):
         """
         Create a new coreference class with the given mentions.
 
         Immediately merges all coreference classes with `self.merge`
 
-        :return: ID of the newly created coreference class
+        :param mentions: mentions to put in the new coreference class
+        :param merge:    whether to immediately call `self.merge`
+        :return:         ID of the newly created coreference class
         """
         cID = self.get_new_id()
         self.coref_classes[cID] = set() \
             if mentions is None \
             else set(mentions)
-        return self.merge().get(cID, cID)
+        if merge:
+            cID = self.merge().get(cID, cID)
+        return cID
 
     def get_new_id(self):
         """
