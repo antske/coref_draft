@@ -19,8 +19,8 @@ def add_coreference_to_naf(nafobj, corefclasses, mentions):
         logger.debug("Coreference classes: {}".format(
             view_coref_classes(
                 nafobj,
-                OrderedDict(sorted(coref_according_to_index.items())),
-                mentions
+                mentions,
+                OrderedDict(sorted(coref_according_to_index.items()))
             )
         ))
 
