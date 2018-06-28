@@ -59,7 +59,12 @@ class CoreferenceInformation:
         """
         Create a new coreference class with the given mentions.
 
-        Immediately merges all coreference classes with `self.merge`
+        Immediately merges all coreference classes with `self.merge` if
+        `merge`.
+
+        !! NB !! If only one mention is passed, merge=True and the mention is
+                 already contained in an existing coreference class, the result
+                 will be as if nothing happened (or the ID changed).
 
         :param mentions: mentions to put in the new coreference class
         :param merge:    whether to immediately call `self.merge`
@@ -84,6 +89,7 @@ class CoreferenceInformation:
     def merge(self):
         """
         Merge all coreference classes that contain the same mention.
+        This means empty classes are left as is.
 
         :return:    mapping of {original ID: new ID} for removed IDs only
         """
@@ -105,6 +111,7 @@ def merge_keys(dictionary, sets_of_keys):
     """
     Given a set of sets of keys that should be merged, merge the given
     dictionary of sets in place.
+    This means empty classes are left as is.
 
     :param dictionary:      dictionary to merge
     :param sets_of_keys:    which keys should be combined
