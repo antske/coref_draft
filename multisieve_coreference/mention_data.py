@@ -46,7 +46,6 @@ class Cmention:
             person='',
             full_head=None,
             relaxed_span=None,
-            in_coref_class=None,
             entity_type=None,
             in_quotation=False,
             is_relative_pronoun=False,
@@ -72,7 +71,6 @@ class Cmention:
         :type person:                  str
         :type full_head:               list
         :type relaxed_span:            list
-        :type in_coref_class:          list
         :type entity_type:             str
         :type in_quotation:            bool
         :type is_relative_pronoun:           bool
@@ -102,9 +100,6 @@ class Cmention:
         self.relaxed_span = [] if relaxed_span is None else relaxed_span
         self.no_stop_words = [] if no_stop_words is None else no_stop_words
 
-        # confirmed
-        self.in_coref_class = [] if in_coref_class is None else in_coref_class
-
         self.coreference_prohibited = [] if coreference_prohibited is None \
             else coreference_prohibited
 
@@ -133,7 +128,6 @@ class Cmention:
             'full_head={self.full_head!r}, ' \
             'head_pos={self.head_pos!r}, ' \
             'relaxed_span={self.relaxed_span!r}, ' \
-            'in_coref_class={self.in_coref_class!r}, ' \
             'entity_type={self.entity_type!r}, ' \
             'in_quotation={self.in_quotation!r}, ' \
             'is_relative_pronoun={self.is_relative_pronoun!r}, ' \

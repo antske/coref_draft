@@ -5,6 +5,7 @@ from collections import defaultdict
 from KafNafParserPy import KafNafParser
 
 from . import constants as c
+from .coref_info import CoreferenceInformation
 from .dump import add_coreference_to_naf
 from .naf_info import (
     get_mentions,
@@ -34,15 +35,18 @@ def get_string_from_ids(id_span):
     return surface_string.rstrip()
 
 
-def match_some_span(mentions, coref_classes, get_span):
+def match_some_span(mentions, coref_info, get_span):
     '''
-    Function that places entities with full string match in the same coreference group
-    :param mentions: dictionary of all available mention objects (key is
-                     mention id)
-    :param coref_classes: dictionary of coreference classes (key is class id)
-    :param get_span: function that returns a span given a `Cmention` object.
+    Function that places entities with full string match in the same
+    coreference group
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
     found_entities = {}
+    coref_classes = coref_info.coref_classes
     # FIXME: verify (when evaluating) whether prohibited needs to be taken into
     #        account here
     # FIXME 2: now only surface strings, we may want to look at lemma matches
@@ -51,63 +55,51 @@ def match_some_span(mentions, coref_classes, get_span):
         if mention.head_pos in ['name', 'noun']:
             mention_string = get_string_from_ids(get_span(mention))
             if mention_string in found_entities:
-                coref_id = found_entities.get(mention_string)
-                if coref_id not in mention.in_coref_class:
-                    mention.in_coref_class.append(coref_id)
-                    coref_classes[coref_id].add(mention.id)
+                coref_id = found_entities[mention_string]
+                coref_classes[coref_id].add(mention.id)
             else:
-                #coref classes will usually have a length 1; if not, it doesn't matter which one is picked
-                if len(mention.in_coref_class) > 0:
-                    coref_nr = mention.in_coref_class[0]
+                classes_of_mention = coref_info.classes_of_mention(mention.id)
+                if len(classes_of_mention) == 0:
+                    coref_id = coref_info.add_coref_class([mention.id])
                 else:
-                    coref_nr = len(coref_classes)
-                    mention.in_coref_class.append(coref_nr)
-                coref_classes[coref_nr].add(mention.id)
-                found_entities[mention_string] = coref_nr
+                    # coref classes will usually have a length 1; if not, it
+                    # doesn't matter which one is picked
+                    coref_id = next(iter(classes_of_mention))
+                found_entities[mention_string] = coref_id
 
 
-def match_full_name_overlap(mentions, coref_classes):
+def match_full_name_overlap(mentions, coref_info):
     '''
     Function that places entities with full string match in the same
     coreference group
-    :param mentions: dictionary of all available mention objects (key is
-                     mention id)
-    :param coref_classes: dictionary of coreference classes (key is class id)
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
-    match_some_span(mentions, coref_classes, lambda m: m.span)
+    match_some_span(mentions, coref_info, lambda m: m.span)
 
 
-def match_relaxed_string(mentions, coref_classes):
+def match_relaxed_string(mentions, coref_info):
     '''
     Function that matches mentions which have the same relaxed head
-    :param mentions: dictionary of all available mention objects (key is
-                     mention id)
-    :param coref_classes: dictionary of coreference classes (key is class id)
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
-    match_some_span(mentions, coref_classes, lambda m: m.relaxed_span)
+    match_some_span(mentions, coref_info, lambda m: m.relaxed_span)
 
 
-def update_coref_class(coref_class, current_mention, coref_mention):
-    '''
-    Function that creates new input for coref class when coreference identified
-    :param coref_class: coref_class dictionary
-    :param current_mention: mention in quotation
-    :param coref_mention: corefering mention
-    :return:
-    '''
-
-    if len(coref_mention) > 0:
-
-        coref_class_id = len(coref_class)
-        coref_class[coref_class_id].add(current_mention.id)
-        coref_class[coref_class_id].add(coref_mention)
-
-def included_in_direct_speech(quotations, mention, coref_class):
+def included_in_direct_speech(quotations, mention, coref_info):
     '''
     Function that verifies whether mention is included in some quotation
-    :param quotations: list of quotations
-    :param mention: a specific mention
-    :return:
+    :param quotations:  list of quotation objects
+    :param mention:     one specific `Cmention`
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
     mention_span_set = set(mention.span)
     for quote in quotations:
@@ -120,7 +112,7 @@ def included_in_direct_speech(quotations, mention, coref_class):
             if mention.head_pos == 'pron':
                 if mention.person == '1':
                     if source:
-                        update_coref_class(coref_class, mention, source)
+                        coref_info.add_coref_class([mention.id, source])
                     if topic:
                         mention.coreference_prohibited.append(topic)
                     if addressee:
@@ -131,12 +123,12 @@ def included_in_direct_speech(quotations, mention, coref_class):
                     if topic:
                         mention.coreference_prohibited.append(topic)
                     if addressee:
-                        update_coref_class(coref_class, mention, addressee)
+                        coref_info.add_coref_class([mention.id, addressee])
                 elif mention.person == '3':
                     if source:
                         mention.coreference_prohibited.append(source)
                     if topic:
-                        update_coref_class(coref_class, mention, topic)
+                        coref_info.add_coref_class([mention.id, topic])
                     if addressee:
                         mention.coreference_prohibited.append(addressee)
             elif source:
@@ -147,71 +139,19 @@ def included_in_direct_speech(quotations, mention, coref_class):
                 # names to speaker
 
 
-def direct_speech_interpretation(quotations, mentions):
+def direct_speech_interpretation(quotations, mentions, coref_info):
     '''
-    Function that applies the first sieve; assigning coreference or prohibited coreference
-    based on direct speech
-    :param quotations: list of quotation objects
-    :param mentions: list of mention objects
-    :return: None
+    Function that applies the first sieve; assigning coreference or prohibited
+    coreference based on direct speech
+
+    :param quotations:  list of quotation objects
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
-    coref_classes = defaultdict(set)
     for mid, mention in mentions.items():
-        included_in_direct_speech(quotations, mention, coref_classes)
-
-    return coref_classes
-
-
-def update_mentions(mentions, coref_classes):
-    '''
-    Function that indicates in mention representations to which coref_class they have been assigned (if any)
-    :param mentions:
-    :param coref_classes:
-    :return:
-    '''
-    for k, corefs in coref_classes.items():
-        if corefs is not None:
-            for coref in corefs:
-                mention = mentions.get(coref)
-                #we don't need to mark it more than once
-                if not k in mention.in_coref_class:
-                    mention.in_coref_class.append(k)
-
-def merge_merge_list(merge_lists):
-
-    #FIXME: check this function for artificial context (i.e. create unit test)
-    new_merge_list = []
-    for to_merge in merge_lists:
-        merge_with_previous = False
-        for mid in to_merge:
-            for i, nml in enumerate(new_merge_list):
-                if mid in nml:
-                    merge_with_previous = True
-                    updated_nml = set(nml) | set(to_merge)
-                    new_merge_list[i] = updated_nml
-        if not merge_with_previous:
-            new_merge_list.append(set(to_merge))
-    return new_merge_list
-
-
-def clean_up_coref_classes(coref_classes, mentions):
-
-    to_merge = []
-    for mid, mention in mentions.items():
-        if len(mention.in_coref_class) > 1:
-            to_merge.append(mention.in_coref_class)
-
-    grouped_merge_list = merge_merge_list(to_merge)
-
-    for merges in grouped_merge_list:
-        merges = sorted(merges)
-        overall_id = merges[0]
-        for cid in merges[1:]:
-            coref_classes[overall_id] |= coref_classes.pop(cid)
-
-        # reset mention coreference class to selected id
-        for mention_id in coref_classes[overall_id]:
-            mentions[mention_id].in_coref_class = [overall_id]
+        included_in_direct_speech(quotations, mention, coref_info)
 
 
 def identify_span_matching_mention(span, mid, mentions):
@@ -233,50 +173,18 @@ def identify_span_matching_mention(span, mid, mentions):
     return matching_mentions
 
 
-def update_matching_mentions(mentions, matches, mention1, coref_classes):
-    '''
-    Function that updates mentions and coref_classes objected based on identified matches
-    :param mentions:
-    :param mention1:
-    :param match:
-    :param coref_classes:
-    :return:
-    '''
-    coref_id = None
-    if len(mention1.in_coref_class) > 0:
-        for c_class in mention1.in_coref_class:
-            if coref_classes[c_class] is not None:
-                coref_id = c_class
-    else:
-        for matching_ment in matches:
-            myMention = mentions.get(matching_ment)
-            if len(myMention.in_coref_class) > 0:
-                for c_coref in myMention.in_coref_class:
-                    if coref_classes.get(c_coref) is not None:
-                        coref_id = c_coref
-    if coref_id is None:
-        coref_id = len(coref_classes)
-    if mention1.id not in coref_classes[coref_id]:
-        coref_classes[coref_id].add(mention1.id)
-        if coref_id not in mention1.in_coref_class:
-            mention1.in_coref_class.append(coref_id)
-    for matching in matches:
-        if matching not in coref_classes[coref_id]:
-            coref_classes[coref_id].add(matching)
-            matchingMention = mentions.get(matching)
-            if coref_id not in matchingMention.in_coref_class:
-                matchingMention.in_coref_class.append(coref_id)
-
-
-def identify_some_structures(mentions, coref_classes, get_structures):
+def identify_some_structures(mentions, coref_info, get_structures):
     """
     Assigns coreference for some structures in place
 
     :param mentions:       dictionary of all available mention objects (key is
                            mention id)
-    :param coref_classes:  dictionary of coreference classes (key is class id)
+    :param coref_info:     CoreferenceInformation with current coreference
+                           classes
     :param get_structures: function that returns a list of spans given a
                            `Cmention` object.
+    :return:               None (mentions and coref_classes are updated in
+                           place)
     """
     for mid, mention in mentions.items():
         structures = get_structures(mention)
@@ -287,33 +195,31 @@ def identify_some_structures(mentions, coref_classes, get_structures):
                 mentions
             )
             if len(matching_mentions) > 0:
-                update_matching_mentions(
-                    mentions,
-                    matching_mentions,
-                    mention,
-                    coref_classes
-                )
+                coref_info.add_coref_class([mid] + matching_mentions)
 
 
-def identify_appositive_structures(mentions, coref_classes):
+def identify_appositive_structures(mentions, coref_info):
     '''
     Assigns coreference for appositive structures in place
 
-    :param mentions:       dictionary of all available mention objects (key is
-                           mention id)
-    :param coref_classes:  dictionary of coreference classes (key is class id)
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
-    identify_some_structures(mentions, coref_classes, lambda m: m.appositives)
+    identify_some_structures(mentions, coref_info, lambda m: m.appositives)
 
 
-def identify_predicative_structures(mentions, coref_classes):
+def identify_predicative_structures(mentions, coref_info):
     '''
     Assigns coreference for predicative structures in place
-    :param mentions:       dictionary of all available mention objects (key is
-                           mention id)
-    :param coref_classes:  dictionary of coreference classes (key is class id)
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
-    identify_some_structures(mentions, coref_classes, lambda m: m.predicatives)
+    identify_some_structures(mentions, coref_info, lambda m: m.predicatives)
 
 
 def get_closest_match_relative_pronoun(mentions, matching, mention_index):
@@ -327,13 +233,15 @@ def get_closest_match_relative_pronoun(mentions, matching, mention_index):
     return antecedent
 
 
-
-def resolve_relative_pronoun_structures(mentions, coref_classes):
+def resolve_relative_pronoun_structures(mentions, coref_info):
     '''
-    Identifies relative pronouns and assigns them to the class of the noun they're modifying
-    :param mentions: dictionary of mentions
-    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
-    :return: None (mentions and coref_classes are updated)
+    Identifies relative pronouns and assigns them to the class of the noun
+    they're modifying
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
     for mid, mention in mentions.items():
         if mention.is_relative_pronoun:
@@ -345,7 +253,7 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
                         if mention.head_offset in mod:
                             matching.append(omid)
             if len(matching) == 1:
-                update_matching_mentions(mentions, matching, mention, coref_classes)
+                coref_info.add_coref_class(matching + [mid])
             elif len(matching) > 1:
                 mention_index = mention.head_offset
                 my_match = get_closest_match_relative_pronoun(
@@ -353,15 +261,17 @@ def resolve_relative_pronoun_structures(mentions, coref_classes):
                     matching,
                     mention_index
                 )
-                update_matching_mentions(mentions, [my_match.id], mention, coref_classes)
+                coref_info.add_coref_class([my_match.id, mid])
 
 
-def resolve_reflective_pronoun_structures(mentions, coref_classes):
+def resolve_reflective_pronoun_structures(mentions, coref_info):
     '''
-    Identifies mention that is correct coreference for relfectives
-    :param mentions:
-    :param coref_classes:
-    :return:
+    Identifies mention that is correct coreference for reflectives
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
     for mid, mention in mentions.items():
         if mention.is_reflective_pronoun:
@@ -374,7 +284,7 @@ def resolve_reflective_pronoun_structures(mentions, coref_classes):
                         if int(othermention.head_offset) < mention.head_offset:
                             matching.append(omid)
             if len(matching) == 1:
-                update_matching_mentions(mentions, matching, mention, coref_classes)
+                coref_info.add_coref_class(matching + [mid])
             elif len(matching) > 1:
                 mention_index = mention.head_offset
                 my_match = get_closest_match_relative_pronoun(
@@ -382,15 +292,17 @@ def resolve_reflective_pronoun_structures(mentions, coref_classes):
                     matching,
                     mention_index
                 )
-                update_matching_mentions(mentions, [my_match.id], mention, coref_classes)
+                coref_info.add_coref_class([my_match.id, mid])
 
 
-def identify_acronyms_or_alternative_names(mentions, coref_classes):
+def identify_acronyms_or_alternative_names(mentions, coref_info):
     '''
     Identifies structures that add alternative name
-    :param mentions: dictionary of mentions
-    :param coref_classes: dictionary of coreference class with all coreferring mentions as value
-    :return: None (mentions and coref_classes are updated)
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
     # FIXME input specific
     for mid, mention in mentions.items():
@@ -408,7 +320,7 @@ def identify_acronyms_or_alternative_names(mentions, coref_classes):
                     if mymatch.entity_type in ['PER', 'ORG', 'LOC', 'MISC']:
                         final_matches.append(matchid)
             if len(final_matches) > 0:
-                update_matching_mentions(mentions, final_matches, mention, coref_classes)
+                coref_info.add_coref_class(final_matches + [mid])
 
 
 def get_sentence_mentions(mentions):
@@ -422,35 +334,40 @@ def get_sentence_mentions(mentions):
     return sentenceMentions
 
 
-
-def add_coref_prohibitions(mentions, coref_classes):
-
+def add_coref_prohibitions(mentions, coref_info):
+    """
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
+    """
     sentenceMentions = get_sentence_mentions(mentions)
     for snr, mids in sentenceMentions.items():
         for mid in mids:
             mention = mentions.get(mid)
-            corefs = []
-            for c_class in mention.in_coref_class:
-                corefs += coref_classes.get(c_class)
+            corefs = set()
+            for c_class in coref_info.classes_of_mention(mention):
+                corefs |= coref_info.coref_classes[c_class]
             for same_sent_mid in mids:
                 if same_sent_mid != mid and same_sent_mid not in corefs:
                     mention.coreference_prohibited.append(same_sent_mid)
 
 
-
-
-def apply_precise_constructs(mentions, coref_classes):
+def apply_precise_constructs(mentions, coref_info):
     '''
-    Function that moderates the precise constructs (calling one after the other
-    :param mentions: dictionary storing mentions
-    :param coref_classes: dictionary storing coref_classes so far
-    :return: None (mentions and coref_classes are updated)
+    Function that moderates the precise constructs (calling one after the
+    other)
+
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
     '''
-    identify_appositive_structures(mentions, coref_classes)
-    identify_predicative_structures(mentions, coref_classes)
-    resolve_relative_pronoun_structures(mentions, coref_classes)
-    identify_acronyms_or_alternative_names(mentions, coref_classes)
-    resolve_reflective_pronoun_structures(mentions, coref_classes)
+    identify_appositive_structures(mentions, coref_info)
+    identify_predicative_structures(mentions, coref_info)
+    resolve_relative_pronoun_structures(mentions, coref_info)
+    identify_acronyms_or_alternative_names(mentions, coref_info)
+    resolve_reflective_pronoun_structures(mentions, coref_info)
     # f. Demonym Israel, Israeli (later)
 
 
@@ -488,8 +405,14 @@ def find_strict_head_antecedents(mention, mentions, sieve):
     return antecedents
 
 
-def apply_strict_head_match(mentions, coref_classes, sieve='5'):
-
+def apply_strict_head_match(mentions, coref_info, sieve='5'):
+    """
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :param sieve:       ID of the sieve as a string
+    :return:            None (mentions and coref_classes are updated in place)
+    """
     # FIXME: parser specific check for pronoun
     for mention in mentions.values():
         if not mention.head_pos == 'pron':
@@ -499,7 +422,7 @@ def apply_strict_head_match(mentions, coref_classes, sieve='5'):
                 sieve
             )
             if len(antecedents) > 0:
-                update_matching_mentions(mentions, antecedents, mention, coref_classes)
+                coref_info.add_coref_class(antecedents + [mention.id])
 
 
 def only_identical_numbers(span1, span2):
@@ -561,16 +484,14 @@ def find_head_match_coreferents(mention, mentions):
     return coreferents
 
 
-
-def apply_proper_head_word_match(mentions, coref_classes):
+def apply_proper_head_word_match(mentions, coref_info):
 
     # FIXME: tool specific output for entity type
     for mention in mentions.values():
         if mention.entity_type in ['PER', 'ORG', 'LOC', 'MISC']:
             coreferents = find_head_match_coreferents(mention, mentions)
             if len(coreferents) > 0:
-                update_matching_mentions(mentions, coreferents, mention, coref_classes)
-
+                coref_info.add_coref_class(coreferents + [mention.id])
 
 
 def find_relaxed_head_antecedents(mention, mentions):
@@ -606,13 +527,18 @@ def find_relaxed_head_antecedents(mention, mentions):
     return antecedents
 
 
-def apply_relaxed_head_match(mentions, coref_classes):
-
+def apply_relaxed_head_match(mentions, coref_info):
+    """
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
+    """
     for mention in mentions.values():
         if mention.entity_type in ['PER', 'ORG', 'LOC', 'MISC']:
             antecedents = find_relaxed_head_antecedents(mention, mentions)
             if len(antecedents) > 0:
-                update_matching_mentions(mentions, antecedents, mention, coref_classes)
+                coref_info.add_coref_class(antecedents + [mention.id])
 
 
 def is_compatible(string1, string2):
@@ -685,15 +611,20 @@ def identify_antecedent(mention, mentions):
     return antecedent
 
 
-def resolve_pronoun_coreference(mentions, coref_classes):
-
+def resolve_pronoun_coreference(mentions, coref_info):
+    """
+    :param mentions:    dictionary of all available mention objects (key is
+                        mention id)
+    :param coref_info:  CoreferenceInformation with current coreference classes
+    :return:            None (mentions and coref_classes are updated in place)
+    """
     for mention in mentions.values():
         # we only deal with unresolved pronouns here
-        if mention.head_pos == 'pron' and len(mention.in_coref_class) == 0:
+        if mention.head_pos == 'pron' and \
+           len(coref_info.classes_of_mention(mention)) == 0:
             antecedent = identify_antecedent(mention, mentions)
             if antecedent is not None:
-                update_matching_mentions(mentions, [antecedent], mention, coref_classes)
-
+                coref_info.add_coref_class([antecedent, mention.id])
 
 
 def initialize_global_dictionaries(nafobj):
@@ -705,8 +636,11 @@ def initialize_global_dictionaries(nafobj):
 
 def resolve_coreference(nafin):
 
+    logger.info("Initializing...")
     initialize_global_dictionaries(nafin)
+    logger.info("Finding mentions...")
     mentions = get_mentions(nafin)
+    logger.info("Finding quotations...")
     quotations = identify_direct_quotations(nafin, mentions)
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -717,123 +651,118 @@ def resolve_coreference(nafin):
             )
         )
 
+    coref_info = CoreferenceInformation()
+
     logger.info("Sieve 1: Speaker Identification")
-    coref_classes = direct_speech_interpretation(quotations, mentions)
-    update_mentions(mentions, coref_classes)
+    direct_speech_interpretation(quotations, mentions, coref_info)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         from .util import view_coref_classes
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Sieve 2: String Match")
-    match_full_name_overlap(mentions, coref_classes)
-    clean_up_coref_classes(coref_classes, mentions)
-    update_mentions(mentions, coref_classes)
+    match_full_name_overlap(mentions, coref_info)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Sieve 3: Relaxed String Match")
-    match_relaxed_string(mentions, coref_classes)
-    clean_up_coref_classes(coref_classes, mentions)
-    update_mentions(mentions, coref_classes)
+    match_relaxed_string(mentions, coref_info)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Sieve 4: Precise constructs")
-    apply_precise_constructs(mentions, coref_classes)
-    clean_up_coref_classes(coref_classes, mentions)
-    update_mentions(mentions, coref_classes)
+    apply_precise_constructs(mentions, coref_info)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Sieve 5-7: Strict Head Match")
-    apply_strict_head_match(mentions, coref_classes)
-    clean_up_coref_classes(coref_classes, mentions)
-    update_mentions(mentions, coref_classes)
+    apply_strict_head_match(mentions, coref_info)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Sieve 8: Proper Head Word Match")
-    apply_proper_head_word_match(mentions, coref_classes)
-    clean_up_coref_classes(coref_classes, mentions)
-    update_mentions(mentions, coref_classes)
+    apply_proper_head_word_match(mentions, coref_info)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Sieve 9: Relaxed Head Match")
-    apply_relaxed_head_match(mentions, coref_classes)
-    clean_up_coref_classes(coref_classes, mentions)
-    update_mentions(mentions, coref_classes)
+    apply_relaxed_head_match(mentions, coref_info)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Sieve 10")
 
     logger.info("Add coreferences prohibitions")
-    add_coref_prohibitions(mentions, coref_classes)
+    add_coref_prohibitions(mentions, coref_info)
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
     logger.info("Resolve relative pronoun coreferences")
-    resolve_pronoun_coreference(mentions, coref_classes)
+    resolve_pronoun_coreference(mentions, coref_info)
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
-    clean_up_coref_classes(coref_classes, mentions)
-    update_mentions(mentions, coref_classes)
+    coref_info.merge()
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logger.debug(
             "Coreference classes: {}".format(
-                view_coref_classes(nafin, coref_classes, mentions)
+                view_coref_classes(nafin, mentions, coref_info.coref_classes)
             )
         )
 
-    return coref_classes, mentions
+    return coref_info.coref_classes, mentions
 
 
 def process_coreference(
