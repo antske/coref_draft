@@ -60,7 +60,12 @@ def match_some_span(mentions, coref_info, get_span):
             else:
                 classes_of_mention = coref_info.classes_of_mention(mention.id)
                 if len(classes_of_mention) == 0:
-                    coref_id = coref_info.add_coref_class([mention.id])
+                    # Don't merge because merging may change the IDs in
+                    # `found_entities`
+                    coref_id = coref_info.add_coref_class(
+                        [mention.id],
+                        merge=False
+                    )
                 else:
                     # coref classes will usually have a length 1; if not, it
                     # doesn't matter which one is picked
