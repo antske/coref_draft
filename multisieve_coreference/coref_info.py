@@ -55,7 +55,7 @@ class CoreferenceInformation:
     def referenced_mentions(self):
         return frozenset(it.chain.from_iterable(self.coref_classes.values()))
 
-    def add_coref_class(self, mentions=None, merge=False):
+    def add_coref_class(self, mentions=None, merge=True):
         """
         Create a new coreference class with the given mentions.
 
