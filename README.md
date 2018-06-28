@@ -50,11 +50,13 @@ Contact
 
 Issues
 ------
- - [ ] `global stop_words` should be a `set`
+ - [ ] `global stop_words` should be a `set` (and not a global)
  - [ ] `linguisticProcessors` layer should be added to `nafHeader`
  - [ ] `create_mention` docstring
  - [ ] `fem` and `masc` do not appear in output of Alpino, but _are_ used to identify gender
  - [ ] `update_coref_class`: `if len(coref_mention) > 0:` seems very icky
+ - [ ] Many variables and functions use `id` in their name while they actually contain or use offsets.
+ - [ ] Duplicate code in `resolve_relative_pronoun_structures` and `resolve_reflective_pronoun_structures`
 
 License
 ------
