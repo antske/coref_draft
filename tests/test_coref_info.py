@@ -35,6 +35,12 @@ def dicts_and_key_sets(draw, *args, **kwargs):
     return dic, key_sets
 
 
+@given(dictionaries(text(), sets(text())), integers())
+def test_repr(dic, start_id):
+    info = CoreferenceInformation(dic, start_id)
+    assert info == eval(repr(info))
+
+
 @given(dictionaries(text(), sets(text())))
 def test_merge_keys_fully_random_dicts(indic):
     orig_keys = list(indic)

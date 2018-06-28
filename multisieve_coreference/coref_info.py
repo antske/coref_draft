@@ -39,6 +39,12 @@ class CoreferenceInformation:
             '{self.id_counter}' \
             ')'.format(self=self)
 
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.coref_classes == other.coref_classes and \
+                self.id_counter == other.id_counter
+        return False
+
     def classes_of_mention(self, mention_id):
         """
         Get the set of coreference class IDs that the given mention is part of.

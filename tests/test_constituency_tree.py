@@ -78,7 +78,7 @@ def test_deep_get_constituent(deep_tree, caplog):
 
 
 def test_repr(any_tree):
-    repr(any_tree)
+    assert any_tree == eval(repr(any_tree))
 
 
 def test_filter_top_node(example_constituency_tree, deep_tree, caplog):
