@@ -39,15 +39,6 @@ Calling `process_coreference` will change the naf_object in-place by adding core
 **!! NB !!** Singleton clusters are left out by default. To Include singleton clusters pass `-s` or `--include_singletons` on the command line or call `process_coreference(naf_object, include_singletons=True)`.
 
 
-Contact
-------
-
-* Antske Fokkens
-* antske.fokkens@vu.nl
-* antske@gmail.com
-* http://antskefokkens.info
-* Vrije University of Amsterdam
-
 Issues
 ------
  - [ ] `global stop_words` should be a `set` (and not a global)
@@ -57,6 +48,15 @@ Issues
  - [ ] `update_coref_class`: `if len(coref_mention) > 0:` seems very icky
  - [ ] Many variables and functions use `id` in their name while they actually contain or use offsets.
  - [ ] Duplicate code in `resolve_relative_pronoun_structures` and `resolve_reflective_pronoun_structures`
+
+Contact
+------
+
+* Antske Fokkens
+* antske.fokkens@vu.nl
+* antske@gmail.com
+* http://antskefokkens.info
+* Vrije University of Amsterdam
 
 License
 ------
