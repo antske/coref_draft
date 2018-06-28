@@ -79,13 +79,12 @@ def get_ordered_coreference_chains(corefclasses, mentions):
     coref_dict = {}
 
     for mids in corefclasses.values():
-        if mids is not None:
-            first_index = 90000000000
-            for mid in mids:
-                mention = mentions.get(mid)
-                if mention.head_offset < first_index:
-                    first_index = mention.head_offset
-            coref_dict[first_index] = mids
+        first_index = 90000000000
+        for mid in mids:
+            mention = mentions[mid]
+            if mention.head_offset < first_index:
+                first_index = mention.head_offset
+        coref_dict[first_index] = mids
 
     return coref_dict
 
