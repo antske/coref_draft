@@ -49,6 +49,14 @@ Issues
  - [ ] Many variables and functions use `id` in their name while they actually contain or use offsets.
  - [ ] Duplicate code in `resolve_relative_pronoun_structures` and `resolve_reflective_pronoun_structures`
 
+
+Design ideal
+------------
+It would be great if all changing information (mostly related to which mentions should or should not be in the same coreference class) is kept in one object, instead of spread out amongst the mention objects themselves. (This is currently the case with `Cmention.coreference_prohibited`.)
+
+It would be even nicer if every sieve would inherit from some `Sieve` abstraction and these sieves could be easily plugged and played by moving them around in some input sequence.
+
+
 Contact
 ------
 
