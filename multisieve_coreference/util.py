@@ -32,10 +32,10 @@ def view_mentions(nafobj, mentions):
 def view_mention(nafobj, mention_ID, mention):
     return '{}: {!r}'.format(
         mention_ID,
-        list(it.chain(*(
+        list(it.chain.from_iterable(
             term_id_to_tokens(nafobj, termID)
             for termID in get_terms_from_offsets(nafobj, mention.span)[0]
-        )))
+        ))
     )
 
 
