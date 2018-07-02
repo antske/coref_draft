@@ -21,24 +21,41 @@ def test_main_example(example_naf_file, temp_file, example_naf_output):
         assert out.read() == correct.read()
 
 
-def test_example(example_naf_object, caplog):
-    # caplog.set_level('DEBUG')
-    caplog.set_level('WARNING', 'multisieve_coreference.constituency_tree')
-    out = process_coreference(example_naf_object)
+def test_example_without_fill(example_naf_object, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(example_naf_object, fill_gaps=False)
     assert out.coreference_layer is not None
 
 
 @pytest.mark.slow
-def test_main_sonar1(sonar_naf_object1, caplog):
-    # caplog.set_level('DEBUG')
-    caplog.set_level('WARNING', 'multisieve_coreference.constituency_tree')
-    out = process_coreference(sonar_naf_object1)
+def test_main_sonar1_without_fill(sonar_naf_object1, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(sonar_naf_object1, fill_gaps=False)
     assert out.coreference_layer is not None
 
 
 @pytest.mark.slow
-def test_main_sonar2(sonar_naf_object2, caplog):
-    # caplog.set_level('DEBUG')
-    caplog.set_level('WARNING', 'multisieve_coreference.constituency_tree')
-    out = process_coreference(sonar_naf_object2)
+def test_main_sonar2_without_fill(sonar_naf_object2, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(sonar_naf_object2, fill_gaps=False)
+    assert out.coreference_layer is not None
+
+
+def test_example_with_fill(example_naf_object, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(example_naf_object, fill_gaps=True)
+    assert out.coreference_layer is not None
+
+
+@pytest.mark.slow
+def test_main_sonar1_with_fill(sonar_naf_object1, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(sonar_naf_object1, fill_gaps=True)
+    assert out.coreference_layer is not None
+
+
+@pytest.mark.slow
+def test_main_sonar2_with_fill(sonar_naf_object2, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(sonar_naf_object2, fill_gaps=True)
     assert out.coreference_layer is not None
