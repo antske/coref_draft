@@ -1,5 +1,5 @@
 import itertools as it
-from .dump import get_terms_from_offsets
+from .dump import get_offset_to_term_id_dict
 
 
 def term_id_to_tokens(nafobj, term_id):
@@ -30,11 +30,12 @@ def view_mentions(nafobj, mentions):
 
 
 def view_mention(nafobj, mention_ID, mention):
+    dic = get_offset_to_term_id_dict(nafobj)
     return '{}: {!r}'.format(
         mention_ID,
         list(it.chain.from_iterable(
             term_id_to_tokens(nafobj, termID)
-            for termID in get_terms_from_offsets(nafobj, mention.span)[0]
+            for termID in map(dic.get, mention.span)
         ))
     )
 

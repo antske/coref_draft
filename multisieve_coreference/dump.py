@@ -14,26 +14,35 @@ def add_coreference_to_naf(nafobj, corefclasses, mentions):
         mentions
     )
 
+    offset2termid = get_offset_to_term_id_dict(nafobj)
+
     for mids in coref_according_to_offset:
-        if mids is not None:
-            mids = set(mids)
-            nafCoref = Ccoreference()
-            cid = 'co' + str(start_count)
-            start_count += 1
-            nafCoref.set_id(cid)
-            nafCoref.set_type('entity')
-            data = sorted(
-                get_terms_from_offsets(
-                    nafobj,
-                    mention.span,
-                    mention.head_offset
-                )
-                for mention in map(mentions.get, mids)
+        mids = set(mids)
+        nafCoref = Ccoreference()
+        cid = 'co' + str(start_count)
+        start_count += 1
+        nafCoref.set_id(cid)
+        nafCoref.set_type('entity')
+        data = sorted(
+            (
+                offset2termid[mention.head_offset],
+                map(offset2termid.get, mention.span)
             )
-            for term_id_span, head_id in data:
-                coref_span = create_span(term_id_span, head_id)
-                nafCoref.add_span_object(coref_span)
-            nafobj.add_coreference(nafCoref)
+            for mention in map(mentions.get, mids)
+        )
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            logger.debug("Mentions:\n")
+            for mid in mids:
+                logger.debug("{}: {}".format(mid, mentions.get(mid)))
+        for head_id, term_id_span in data:
+            if logger.getEffectiveLevel() <= logging.DEBUG:
+                term_id_span = list(term_id_span)
+                logger.debug("cid: {}".format(cid))
+                logger.debug("head ID: {}".format(head_id))
+                logger.debug("TID span: {}".format(term_id_span))
+            coref_span = create_span(term_id_span, head_id)
+            nafCoref.add_span_object(coref_span)
+        nafobj.add_coreference(nafCoref)
 
 
 def create_span(term_id_span, head_id):
@@ -87,22 +96,14 @@ def get_starting_count(nafobj):
     return coref_counter
 
 
-def get_terms_from_offsets(nafobj, offset_span, head_offset=-1):
-
-    wids = []
-    head_wid = ''
+def get_offset_to_term_id_dict(nafobj):
+    token_id_dict = {}
     for token in nafobj.get_tokens():
-        if int(token.get_offset()) in offset_span:
-            wids.append(token.get_id())
-            if int(token.get_offset()) == head_offset:
-                head_wid = token.get_id()
+        token_id_dict[token.get_id()] = token
 
-    tids = []
-    head_tid = ''
+    dic = {}
     for term in nafobj.get_terms():
-        if term.get_span().get_span_ids()[0] in wids:
-            tids.append(term.get_id())
-        if head_wid in term.get_span().get_span_ids():
-            head_tid = term.get_id()
-
-    return tids, head_tid
+        tid = term.get_id()
+        for token in map(token_id_dict.get, term.get_span_ids()):
+            dic[int(token.get_offset())] = tid
+    return dic
