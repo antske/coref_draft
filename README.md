@@ -41,13 +41,17 @@ Calling `process_coreference` will change the naf_object in-place by adding core
 
 Issues
 ------
- - [ ] `global stop_words` should be a `set` (and not a global)
+ - [ ] `global stop_words` should be a `set` (and not a global) and doesn't seem to be used consistently.
  - [ ] `linguisticProcessors` layer should be added to `nafHeader`
  - [ ] `create_mention` docstring
  - [ ] `fem` and `masc` do not appear in output of Alpino, but _are_ used to identify gender
  - [ ] `update_coref_class`: `if len(coref_mention) > 0:` seems very icky
  - [ ] Many variables and functions use `id` in their name while they actually contain or use offsets.
  - [ ] Duplicate code in `resolve_relative_pronoun_structures` and `resolve_reflective_pronoun_structures`
+ - [ ] `get_predicative_information` seems to miss some constructs
+ - [ ] `dep2heads` shouldn't need lists as values because a dependency _tree_ is a tree.
+ - [ ] Add punctuation marks to mention spans in post processing **if** they are in the middle of the mention. They aren't in the span in the first place because punctuation is filtered out of the dependency tree to make sure punctuation that isn't in the middle of a mention is not included.
+ - [ ] `Cmention.coreference_prohibited` does not seem to be used.
 
 
 Design ideal
