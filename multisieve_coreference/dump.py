@@ -9,23 +9,12 @@ logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 def add_coreference_to_naf(nafobj, corefclasses, mentions):
 
     start_count = get_starting_count(nafobj)
-    coref_according_to_index = get_ordered_coreference_chains(
+    coref_according_to_offset = get_ordered_coreference_chains(
         corefclasses,
         mentions
     )
-    if logger.getEffectiveLevel() <= logging.DEBUG:
-        from .util import view_coref_classes
-        from collections import OrderedDict
-        logger.debug("Coreference classes: {}".format(
-            view_coref_classes(
-                nafobj,
-                mentions,
-                OrderedDict(sorted(coref_according_to_index.items()))
-            )
-        ))
 
-    for key in sorted(coref_according_to_index):
-        mids = coref_according_to_index.get(key)
+    for mids in coref_according_to_offset:
         if mids is not None:
             mids = set(mids)
             nafCoref = Ccoreference()
@@ -79,14 +68,14 @@ def get_ordered_coreference_chains(corefclasses, mentions):
     coref_dict = {}
 
     for mids in corefclasses.values():
-        first_index = 90000000000
+        first_index = float('inf')
         for mid in mids:
             mention = mentions[mid]
             if mention.head_offset < first_index:
                 first_index = mention.head_offset
         coref_dict[first_index] = mids
 
-    return coref_dict
+    return [coref_dict[k] for k in sorted(coref_dict)]
 
 
 def get_starting_count(nafobj):
