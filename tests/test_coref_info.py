@@ -52,6 +52,7 @@ def test_merge_keys_fully_random_dicts(indic):
         assert key in indic or (key in keymap and keymap[key] in orig_keys)
 
 
+@pytest.mark.slow
 @given(dictionaries(text(), sets(text())), integers())
 def test_merge_keys_pointwise_random_dicts(indic, combinations):
     if indic:
