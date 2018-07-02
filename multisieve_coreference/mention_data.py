@@ -32,7 +32,9 @@ def initiate_stopword_list(lang='nl'):
 class Cmention:
     '''
     This class covers information about mentions that is relevant for
-    coreference resoltion
+    coreference resolution.
+
+    `span` and other things store _offsets_.
     '''
 
     def __init__(
@@ -141,8 +143,8 @@ class Cmention:
             'sentence_number={self.sentence_number!r}, ' \
             ')'.format(self=self)
 
-    def add_relaxed_span_id(self, rsid):
-        self.relaxed_span.append(rsid)
+    def add_relaxed_span_offset(self, offset):
+        self.relaxed_span.append(offset)
 
     def add_modifier(self, mod):
 

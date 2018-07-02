@@ -679,20 +679,20 @@ def create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qu
     return myQuote
 
 
-def initiate_id2string_dicts(nafobj):
+def get_offset2string_dicts(nafobj):
 
-    id2string = {}
-    id2lemma = {}
+    offset2string = {}
+    offset2lemma = {}
 
     for term in nafobj.get_terms():
         identifier = get_offset(nafobj, term.get_id())
         lemma = term.get_lemma()
-        id2lemma[identifier] = lemma
+        offset2lemma[identifier] = lemma
 
     for token in nafobj.get_tokens():
         identifier = int(token.get_offset())
         surface_string = token.get_text()
-        id2string[identifier] = surface_string
+        offset2string[identifier] = surface_string
 
-    return id2string, id2lemma
+    return offset2string, offset2lemma
 
