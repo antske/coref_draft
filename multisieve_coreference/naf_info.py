@@ -43,7 +43,6 @@ def get_mention_spans(nafobj):
 
     :param nafobj:  input nafobj
     :return:        dictionary of head term with as value constituent object
-                    (head id, full head, modifiers, complete constituent)
     '''
     mention_heads = get_relevant_head_ids(nafobj)
     logger.debug("Mention candidate heads: {!r}".format(mention_heads))
@@ -184,13 +183,15 @@ def get_quotation_spans(nafobj):
     :return: list of quotation objects with span defined
     '''
 
-    #FIXME investigate on development corpus what to do with embedded quotations; for now we'll assume a double quotation within a single quote is an error
+    # FIXME investigate on development corpus what to do with embedded
+    # quotations; for now we'll assume a double quotation within a single
+    # quote is an error
 
     in_double_quotation = False
     in_single_quotation = False
     quotations = []
     for term in nafobj.get_terms():
-        if term.get_lemma() in ['"','&amp;amp;amp;quot;']:
+        if term.get_lemma() in ['"', '&amp;amp;amp;quot;']:
             if not in_double_quotation:
                 in_double_quotation = True
                 myQuote = CquotationNaf()
@@ -199,7 +200,7 @@ def get_quotation_spans(nafobj):
                 in_double_quotation = False
                 myQuote.endquote = term.get_id()
                 quotations.append(myQuote)
-            #break off single quotation if double quotation found during this
+            # break off single quotation if double quotation found during this
             if in_single_quotation:
                 in_single_quotation = False
         elif in_double_quotation:
@@ -244,8 +245,8 @@ def analyze_head_relations(nafobj, head_term, head2deps):
     speaker = None
     addressee = None
     topic = None
-    #FIXME: we want to check the preposition
-    #FIXME: no dependents case does occur; check with bigger corpus
+    # FIXME: we want to check the preposition
+    # FIXME: no dependents case does occur; check with bigger corpus
     if dependents is not None:
         for dep in dependents:
             if dep[1] == 'hd/su':
@@ -264,14 +265,14 @@ def analyze_head_relations(nafobj, head_term, head2deps):
                 if term.get_pos() == 'prep':
 
                     if dep[0] in head2deps:
-                        #override addressee by complement if headed by preposition
+                        # override addressee by complement if headed by
+                        # preposition
                         for deprel in head2deps.get(dep[0]):
                             if deprel[1] == 'hd/obj1':
                                 if term.get_lemma() == 'tegen':
                                     addressee = get_constituent(deprel[0])
                                 elif term.get_lemma() == 'over':
                                     topic = get_constituent(deprel[0])
-
 
     return speaker, addressee, topic
 
@@ -286,23 +287,31 @@ def identify_direct_links_to_sip(nafobj, quotation):
 
     for tid in quotation.span:
         deps = csts.head2deps.get(tid)
-        if not deps is None:
-            depids = create_set_of_tids_from_tidfunction(deps)
-            #if one of deps falls outside of quote, it can be linked to the sip
-            span_with_quotes = quotation.span + [quotation.beginquote] + [quotation.endquote]
-            if len(depids.difference(set(span_with_quotes))) > 0:
-                my_joint_set = depids.difference(set(span_with_quotes))
+        if deps is not None:
+            # The first element of every tuple
+            depids = set(next(iter(zip(*deps))))
+            # if one of deps falls outside of quote, it can be linked to the
+            # sip
+            span_with_quotes = quotation.span + [
+                quotation.beginquote, quotation.endquote
+            ]
+            my_joint_set = depids.difference(span_with_quotes)
+            if len(my_joint_set) > 0:
                 head_term = find_relevant_spans(deps, my_joint_set)
-                if not head_term is None:
-                    speaker, addressee, topic = analyze_head_relations(nafobj, head_term, csts.head2deps)
-                    if not speaker is None:
-                        speaker_in_offsets = convert_term_ids_to_offsets(nafobj, speaker)
+                if head_term is not None:
+                    speaker, addressee, topic = analyze_head_relations(
+                        nafobj, head_term, csts.head2deps)
+                    if speaker is not None:
+                        speaker_in_offsets = convert_term_ids_to_offsets(
+                            nafobj, speaker)
                         quotation.source = speaker_in_offsets
-                    if not addressee is None:
-                        addressee_in_offsets = convert_term_ids_to_offsets(nafobj, addressee)
+                    if addressee is not None:
+                        addressee_in_offsets = convert_term_ids_to_offsets(
+                            nafobj, addressee)
                         quotation.addressee = addressee_in_offsets
-                    if not topic is None:
-                        topic_in_offsets = convert_term_ids_to_offsets(nafobj, topic)
+                    if topic is not None:
+                        topic_in_offsets = convert_term_ids_to_offsets(
+                            nafobj, topic)
                         quotation.topic = topic_in_offsets
 
 
@@ -605,22 +614,25 @@ def identify_direct_quotations(nafobj, mentions):
     '''
 
     nafquotations = get_quotation_spans(nafobj)
-    # create_headdep_dicts(nafobj)
     toremove = []
     for quotation in nafquotations:
         identify_direct_links_to_sip(nafobj, quotation)
         if len(quotation.source) == 0:
-            #this can lead to indication of quotation being attribution rather than quotation
+            # this can lead to indication of quotation being attribution rather
+            # than quotation
             if check_if_quotation_contains_dependent(quotation):
                 sentence_to_terms = get_sentence_to_terms(nafobj)
-                identify_source_introducing_constructions(nafobj, quotation, sentence_to_terms)
+                identify_source_introducing_constructions(
+                    nafobj, quotation, sentence_to_terms)
             else:
                 toremove.append(quotation)
 
-    finalnafquotations = get_reduced_list_of_quotations(toremove, nafquotations)
+    finalnafquotations = get_reduced_list_of_quotations(
+        toremove, nafquotations)
     quotations = []
     for qid, nafquotation in enumerate(finalnafquotations):
-        myquote = create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qid)
+        myquote = create_coref_quotation_from_quotation_naf(
+            nafobj, nafquotation, mentions, qid)
         quotations.append(myquote)
 
     return quotations
