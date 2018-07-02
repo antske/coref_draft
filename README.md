@@ -52,6 +52,7 @@ Issues
  - [ ] `dep2heads` shouldn't need lists as values because a dependency _tree_ is a tree.
  - [ ] Add punctuation marks to mention spans in post processing **if** they are in the middle of the mention. They aren't in the span in the first place because punctuation is filtered out of the dependency tree to make sure punctuation that isn't in the middle of a mention is not included.
  - [ ] `Cmention.coreference_prohibited` does not seem to be used.
+ - [ ] `post_process` should only allow adding punctuation in the gaps of a span
 
 
 Design ideal

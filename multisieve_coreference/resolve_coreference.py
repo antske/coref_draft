@@ -634,6 +634,34 @@ def resolve_pronoun_coreference(mentions, coref_info):
                 coref_info.add_coref_class([antecedent, mention.id])
 
 
+def remove_singleton_coreference_classes(coref_classes):
+    singletons = set()
+    for cID, mention_ids in coref_classes.items():
+        if len(mention_ids) < 2:
+            singletons.add(cID)
+
+    for cID in singletons:
+        del coref_classes[cID]
+
+
+def post_process(mentions, coref_info,
+                 fill_gaps=c.FILL_GAPS_IN_OUTPUT,
+                 include_singletons=c.INCLUDE_SINGLETONS_IN_OUTPUT):
+    # Remove unused mentions
+    reffed_mentions = coref_info.referenced_mentions()
+    for ID in tuple(mentions):
+        if ID not in reffed_mentions:
+            del mentions[ID]
+
+    # Fill gaps in the used mentions
+    if fill_gaps:
+        for mention in mentions.values():
+            mention.fill_gaps()
+
+    if not include_singletons:
+        remove_singleton_coreference_classes(coref_info.coref_classes)
+
+
 def initialize_global_dictionaries(nafobj):
 
     global id2string, id2lemma
@@ -644,7 +672,9 @@ def initialize_global_dictionaries(nafobj):
     create_headdep_dicts(nafobj)
 
 
-def resolve_coreference(nafin):
+def resolve_coreference(nafin,
+                        fill_gaps=c.FILL_GAPS_IN_OUTPUT,
+                        include_singletons=c.INCLUDE_SINGLETONS_IN_OUTPUT):
 
     logger.info("Initializing...")
     initialize_global_dictionaries(nafin)
@@ -743,7 +773,7 @@ def resolve_coreference(nafin):
 
     logger.info("Sieve 10")
 
-    logger.info("Add coreferences prohibitions")
+    logger.info("\tAdd coreferences prohibitions")
     add_coref_prohibitions(mentions, coref_info)
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -753,7 +783,7 @@ def resolve_coreference(nafin):
             )
         )
 
-    logger.info("Resolve relative pronoun coreferences")
+    logger.info("\tResolve relative pronoun coreferences")
     resolve_pronoun_coreference(mentions, coref_info)
 
     if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -772,35 +802,34 @@ def resolve_coreference(nafin):
             )
         )
 
+    logger.info("Post processing...")
+    post_process(
+        mentions,
+        coref_info,
+        fill_gaps=fill_gaps,
+        include_singletons=include_singletons
+    )
+
     return coref_info.coref_classes, mentions
 
 
 def process_coreference(
         nafin,
+        fill_gaps=c.FILL_GAPS_IN_OUTPUT,
         include_singletons=c.INCLUDE_SINGLETONS_IN_OUTPUT):
     """
     Process coreferences and add to the given NAF.
     Note that coreferences are added in place, and the NAF is returned for
     convenience
     """
-    coref_classes, mentions = resolve_coreference(nafin)
-    if not include_singletons:
-        logger.info("Removing singleton coreference classes")
-        remove_singleton_coreference_classes(coref_classes)
-
+    coref_classes, mentions = resolve_coreference(
+        nafin,
+        fill_gaps=fill_gaps,
+        include_singletons=include_singletons
+    )
     logger.info("Adding coreference information to NAF...")
     add_coreference_to_naf(nafin, coref_classes, mentions)
     return nafin
-
-
-def remove_singleton_coreference_classes(coref_classes):
-    singletons = set()
-    for cID, mention_ids in coref_classes.items():
-        if len(mention_ids) < 2:
-            singletons.add(cID)
-
-    for cID in singletons:
-        del coref_classes[cID]
 
 
 def main(argv=None):
@@ -816,6 +845,13 @@ def main(argv=None):
         help="Whether to include singletons in the output",
         action='store_true',
         dest='include_singletons'
+    )
+    parser.add_argument(
+        '-g',
+        '--leave_gaps',
+        help="Whether to fill gaps in mention spans",
+        action='store_false',
+        dest='fill_gaps'
     )
     cmdl_args = vars(parser.parse_args(argv))
     logging.basicConfig(level=cmdl_args.pop('level'))

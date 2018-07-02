@@ -73,8 +73,8 @@ class Cmention:
         :type relaxed_span:            list
         :type entity_type:             str
         :type in_quotation:            bool
-        :type is_relative_pronoun:           bool
-        :type is_reflective_pronoun:         bool
+        :type is_relative_pronoun:     bool
+        :type is_reflective_pronoun:   bool
         :type coreference_prohibited:  list
         :type begin_offset:            str
         :type end_offset:              str
@@ -114,7 +114,7 @@ class Cmention:
         self.entity_type = entity_type
 
         self.in_quotation = in_quotation
-        self.is_relative_pronoun = is_relative_pronoun  # TODO!
+        self.is_relative_pronoun = is_relative_pronoun
         self.is_reflective_pronoun = is_reflective_pronoun
 
     def __repr__(self):
@@ -163,6 +163,21 @@ class Cmention:
     def add_main_modifier(self, mmod):
 
         self.main_modifiers.append(mmod)
+
+    def fill_gaps(self, allow_adding=lambda _: True):
+        """
+        Find and fill gaps in the span of this mention.
+
+        :param allow_adding:  (offset) -> bool function deciding whether a
+                              missing term may be added or the gap should be
+                              left as is.
+        """
+        if len(self.span) >= 2:
+            orig = self.span
+            self.span = list(filter(
+                lambda offset: offset in orig or allow_adding(offset),
+                range(self.span[0], self.span[-1])
+            ))
 
 
 def create_mention(nafobj, constituentInfo, head, mid):
