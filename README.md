@@ -41,6 +41,8 @@ Calling `process_coreference` will change the naf_object in-place by adding core
 
 Issues
 ------
+ - [ ] Mentions are not ordered at all, in contrast to the description of the algorithm by Lee et al. (2013)
+ - [ ] Mention attributes are not shared among mentions in the same coreference class, in contrast to the description of the algorithm by Lee et al. (2013)
  - [ ] `global stop_words` should be a `set` (and not a global) and doesn't seem to be used consistently.
  - [ ] `linguisticProcessors` layer should be added to `nafHeader`
  - [ ] `create_mention` docstring
@@ -73,3 +75,9 @@ Contact
 License
 ------
 Sofware distributed under Apache License v2.0, see LICENSE file for details.
+
+
+References
+----------
+
+Heeyoung Lee, Angel Chang, Yves Peirsman, Nathanael Chambers, Mihai Surdeanu, and Dan Jurafsky. 2013. Deterministic coreference resolution based on entity-centric, precision-ranked rules. Comput. Linguist. 39, 4 (December 2013), 885-916. DOI=http://dx.doi.org/10.1162/COLI_a_00152
