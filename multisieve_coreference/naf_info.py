@@ -1,8 +1,7 @@
-import os
 import logging
 from collections import defaultdict, OrderedDict
 
-from .mention_data import create_mention, initiate_stopword_list
+from .mention_data import create_mention
 from .offset_info import (
     convert_term_ids_to_offsets,
     get_offsets_from_span,
@@ -12,10 +11,7 @@ from .quotation import Cquotation
 from .constituent_info import get_named_entities, get_constituents
 from .quotation_naf import CquotationNaf
 from . import constituents as csts
-from .constituents import (
-    get_constituent,
-    create_headdep_dicts
-)
+from .constituents import get_constituent
 
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
@@ -155,9 +151,6 @@ def get_mentions(nafobj):
     :param nafobj: input naf
     :return: list of Cmention objects
     '''
-
-    initiate_stopword_list()
-    create_headdep_dicts(nafobj)
 
     mention_spans = get_mention_spans(nafobj)
     mentions = OrderedDict()

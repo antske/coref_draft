@@ -6,6 +6,8 @@ from KafNafParserPy import KafNafParser
 
 from . import constants as c
 from .coref_info import CoreferenceInformation
+from .mention_data import initiate_stopword_list
+from .constituents import create_headdep_dicts
 from .dump import add_coreference_to_naf
 from .naf_info import (
     get_mentions,
@@ -637,6 +639,9 @@ def initialize_global_dictionaries(nafobj):
     global id2string, id2lemma
 
     id2string, id2lemma = initiate_id2string_dicts(nafobj)
+
+    initiate_stopword_list()
+    create_headdep_dicts(nafobj)
 
 
 def resolve_coreference(nafin):
