@@ -642,7 +642,7 @@ def remove_singleton_coreference_classes(coref_classes):
         del coref_classes[cID]
 
 
-def post_process(mentions, coref_info,
+def post_process(nafobj, mentions, coref_info,
                  fill_gaps=c.FILL_GAPS_IN_OUTPUT,
                  include_singletons=c.INCLUDE_SINGLETONS_IN_OUTPUT):
     # Remove unused mentions
@@ -653,8 +653,11 @@ def post_process(mentions, coref_info,
 
     # Fill gaps in the used mentions
     if fill_gaps:
+        all_offsets = [
+            int(token.get_offset()) for token in nafobj.get_tokens()
+        ]
         for mention in mentions.values():
-            mention.fill_gaps()
+            mention.fill_gaps(all_offsets)
 
     if not include_singletons:
         remove_singleton_coreference_classes(coref_info.coref_classes)
@@ -802,6 +805,7 @@ def resolve_coreference(nafin,
 
     logger.info("Post processing...")
     post_process(
+        nafin,
         mentions,
         coref_info,
         fill_gaps=fill_gaps,

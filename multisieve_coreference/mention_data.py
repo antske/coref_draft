@@ -166,20 +166,19 @@ class Cmention:
 
         self.main_modifiers.append(mmod)
 
-    def fill_gaps(self, allow_adding=lambda _: True):
+    def fill_gaps(self, full_content, allow_adding=lambda _: True):
         """
         Find and fill gaps in the span of this mention.
 
+        :param full_content:  list of things in spans for the whole document
         :param allow_adding:  (offset) -> bool function deciding whether a
                               missing term may be added or the gap should be
                               left as is.
         """
         if len(self.span) >= 2:
-            orig = self.span
-            self.span = list(filter(
-                lambda offset: offset in orig or allow_adding(offset),
-                range(self.span[0], self.span[-1])
-            ))
+            start = full_content.index(self.span[0])
+            end = full_content.index(self.span[-1], start)
+            self.span = full_content[start:end + 1]
 
 
 def create_mention(nafobj, constituentInfo, head, mid):

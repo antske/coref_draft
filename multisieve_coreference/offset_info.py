@@ -20,10 +20,10 @@ def convert_term_ids_to_offsets(nafobj, seq):
     :return:        a list of offsets
     '''
 
-    return [
+    return sorted(
         get_offset(nafobj, tid)
         for tid in seq
-    ]
+    )
 
 
 def get_term_length(nafobj, term_id):
