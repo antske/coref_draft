@@ -35,6 +35,7 @@ process_coreference(naf_object)
 
 Calling `process_coreference` will change the naf_object in-place by adding coref nodes (if any).
 
+Gaps in mention spans (mostly left-out punctuation marks) are not filled by default. To make sure mentions only refer to consecutive spans, pass `-f` or `--fill-gaps` on the command line or call `process_coreference(naf_object, fill_gaps=True)`.
 
 **!! NB !!** Singleton clusters are left out by default. To Include singleton clusters pass `-s` or `--include_singletons` on the command line or call `process_coreference(naf_object, include_singletons=True)`.
 

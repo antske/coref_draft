@@ -849,11 +849,10 @@ def main(argv=None):
         dest='include_singletons'
     )
     parser.add_argument(
-        '-g',
-        '--leave_gaps',
+        '-f',
+        '--fill_gaps',
         help="Whether to fill gaps in mention spans",
-        action='store_false',
-        dest='fill_gaps'
+        action='store_true',
     )
     cmdl_args = vars(parser.parse_args(argv))
     logging.basicConfig(level=cmdl_args.pop('level'))
