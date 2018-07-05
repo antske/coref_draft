@@ -518,7 +518,9 @@ def find_relaxed_head_antecedents(mention, mentions):
         if comp_mention.end_offset < boffset:
             if comp_mention.entity_type == mention.entity_type:
                 match = True
-                full_comp_head = get_string_from_offsets(comp_mention.full_head)
+                full_comp_head = get_string_from_offsets(
+                    comp_mention.full_head
+                )
                 for word in full_head_string.split():
                     if word not in full_comp_head:
                         match = False
