@@ -667,9 +667,13 @@ def initialize_global_dictionaries(nafobj):
 
     global offset2string, offset2lemma
 
+    logger.debug("get_offset2string_dicts")
     offset2string, offset2lemma = get_offset2string_dicts(nafobj)
 
+    logger.debug("initiate_stopword_list")
     initiate_stopword_list()
+
+    logger.debug("create_headdep_dicts")
     create_headdep_dicts(nafobj)
 
 
