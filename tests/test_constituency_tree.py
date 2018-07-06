@@ -29,6 +29,88 @@ def deep_tree():
     })
 
 
+@pytest.fixture
+def not_a_tree():
+    # From WR-P-E-C-0000000021.naf
+    # <wf id="w2082" offset="11950" length="1" sent="124" para="1">-</wf>
+    # <wf id="w2083" offset="11952" length="13" sent="124" para="1">
+    #     Signalementen</wf>
+    # <wf id="w2084" offset="11966" length="1" sent="124" para="1">:</wf>
+    # <wf id="w2085" offset="11968" length="2" sent="124" para="1">..</wf>
+
+    # <term id="t_2081" type="open" lemma="-" pos="punct" morphofeat="LET()">
+    #   <span>
+    #     <target id="w2082" />
+    #   </span>
+    # </term>
+    # <!--Signalementen-->
+    # <term id="t_2082" type="open" lemma="signalement" pos="noun"
+    #      morphofeat="N(soort,mv,basis)">
+    #   <span>
+    #     <target id="w2083" />
+    #   </span>
+    # </term>
+    # <!--:-->
+    # <term id="t_2083" type="open" lemma=":" pos="punct" morphofeat="LET()">
+    #   <span>
+    #     <target id="w2084" />
+    #   </span>
+    # </term>
+    # <!--..-->
+    # <term id="t_2084" type="open" lemma=".." pos="punct" morphofeat="LET()">
+    #   <span>
+    #     <target id="w2085" />
+    #   </span>
+    # </term>
+
+    # <!--- / -( - , Signalementen)-->
+    # <dep from="t_2081" to="t_2082" rfunc="-- / --" />
+    # <!--- / -( - , :)-->
+    # <dep from="t_2081" to="t_2083" rfunc="-- / --" />
+    # <!--- / -( - , ..)-->
+    # <dep from="t_2081" to="t_2084" rfunc="-- / --" />
+    # <!--- / -(Signalementen,  - )-->
+    # <dep from="t_2082" to="t_2081" rfunc="-- / --" />
+    # <!--- / -(Signalementen, :)-->
+    # <dep from="t_2082" to="t_2083" rfunc="-- / --" />
+    # <!--- / -(Signalementen, ..)-->
+    # <dep from="t_2082" to="t_2084" rfunc="-- / --" />
+    # <!--- / -(:,  - )-->
+    # <dep from="t_2083" to="t_2081" rfunc="-- / --" />
+    # <!--- / -(:, Signalementen)-->
+    # <dep from="t_2083" to="t_2082" rfunc="-- / --" />
+    # <!--- / -(:, ..)-->
+    # <dep from="t_2083" to="t_2084" rfunc="-- / --" />
+    # <!--- / -(..,  - )-->
+    # <dep from="t_2084" to="t_2081" rfunc="-- / --" />
+    # <!--- / -(.., Signalementen)-->
+    # <dep from="t_2084" to="t_2082" rfunc="-- / --" />
+    # <!--- / -(.., :)-->
+    # <dep from="t_2084" to="t_2083" rfunc="-- / --" />
+    return ConstituencyTree({
+        't_2081': {
+            ('t_2082', '-- / --'),
+            ('t_2083', '-- / --'),
+            ('t_2084', '-- / --'),
+        },
+        't_2082': {
+            ('t_2081', '-- / --'),
+            ('t_2083', '-- / --'),
+            ('t_2084', '-- / --'),
+        },
+        't_2083': {
+            ('t_2081', '-- / --'),
+            ('t_2082', '-- / --'),
+            ('t_2084', '-- / --'),
+        },
+        't_2084': {
+            ('t_2081', '-- / --'),
+            ('t_2082', '-- / --'),
+            ('t_2083', '-- / --'),
+        },
+    })
+
+
 @pytest.fixture(params=[10, 100, 1000, 10000])
 def very_deep_tree(request):
     return ConstituencyTree({
@@ -39,7 +121,8 @@ def very_deep_tree(request):
 @pytest.fixture(params=[
     'example_constituency_tree',
     'sonar_constituency_tree',
-    'deep_tree'
+    'deep_tree',
+    'not_a_tree',
 ])
 def any_tree(request):
     return request.getfixturevalue(request.param)
@@ -156,3 +239,21 @@ def test_direct_dependents(example_constituency_tree):
         't_0',
         't_2'
     }
+
+
+def test_filter_not_a_tree(not_a_tree):
+    global cycle_count
+    cycle_count = 0
+
+    def my_filter(head):
+        global cycle_count
+        if cycle_count < 1000:
+            cycle_count += 1
+        else:
+            raise AssertionError("This code is in an infinite loop!")
+        return head == 't_2082'
+
+    assert ConstituencyTree.filter_headdep_dict(
+        not_a_tree.head2deps,
+        my_filter
+    ) == {'t_2082': {('t_2082', '-- / --')}}
