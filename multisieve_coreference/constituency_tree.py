@@ -150,6 +150,10 @@ class ConstituencyTree:
 
             from  --child info-->  to
 
+        !! NB !! If a circular reference exists in the dependency tree, this
+                 will stay in, even if some of the terms in the circular
+                 reference are filtered out.
+
         :param head2deps:       {head: {(dep, function), ...}}
         :param term_filter:     filter for terms
         """
@@ -177,6 +181,7 @@ class ConstituencyTree:
                 # Delete the head by adding its dependents to the most shallow
                 # head that isn't filtered out.
                 stack = dep2headIDs.get(headID, [])
+                been_in_stack = set(stack)
                 super_heads = []
                 while stack:
                     logger.debug("stack: {}".format(stack))
@@ -184,7 +189,11 @@ class ConstituencyTree:
                     if term_filter(super_head):
                         super_heads.append(super_head)
                     else:
-                        add_to_stack = dep2headIDs.get(super_head, [])
+                        add_to_stack = [
+                            h for h in dep2headIDs.get(super_head, [])
+                            if h not in been_in_stack
+                        ]
+                        been_in_stack.update(add_to_stack)
                         logger.debug("add_to_stack: {}".format(add_to_stack))
                         stack.extend(
                             add_to_stack
