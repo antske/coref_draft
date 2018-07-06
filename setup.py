@@ -23,5 +23,13 @@ setup(
     data_files=[('', ['LICENSE'])],
     install_requires=[
         "KafNafParserPy>=1.88",
+    ],
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'License :: OSI Approved :: Apache Software License',
+        'Natural Language :: Dutch',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
+        'Topic :: Text Processing :: Linguistic',
     ]
 )
