@@ -44,6 +44,7 @@ Issues
 ------
  - [ ] Mentions are not ordered at all, in contrast to the description of the algorithm by Lee et al. (2013)
  - [ ] Mention attributes are not shared among mentions in the same coreference class, in contrast to the description of the algorithm by Lee et al. (2013)
+ - [ ] Alpino uses two types of dependencies ("deep" and "shallow"). Make sure these are handled correctly.
  - [ ] `global stop_words` should be a `set` (and not a global) and doesn't seem to be used consistently.
  - [ ] `linguisticProcessors` layer should be added to `nafHeader`
  - [ ] `create_mention` docstring
@@ -53,8 +54,8 @@ Issues
  - [ ] `get_predicative_information` seems to miss some constructs
  - [X] ~~`dep2heads` shouldn't need lists as values because a dependency _tree_ is a tree.~~ Apparently dependency trees output by Alpino aren't always a tree.
  - [X] Add punctuation marks to mention spans in post processing **if** they are in the middle of the mention. They aren't in the span in the first place because punctuation is filtered out of the dependency tree to make sure punctuation that isn't in the middle of a mention is not included.
- - [ ] `Cmention.coreference_prohibited` does not seem to be used.
  - [ ] `post_process` should only allow adding punctuation in the gaps of a span
+ - [ ] `Cmention.coreference_prohibited` does not seem to be used.
  - [ ] `check_if_quotation_contains_dependent` is a mess.
 
 
