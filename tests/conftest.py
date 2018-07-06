@@ -33,7 +33,7 @@ def example_naf_object(example_naf_file):
     return KafNafParser(example_naf_file)
 
 
-# SoNaR files
+# SoNaR files that caused problems before
 @pytest.fixture
 def sonar_naf_file1(resources_dir):
     return os.path.join(resources_dir, 'SoNaR-dpc-bal-001236-nl-sen-in.naf')
@@ -54,3 +54,17 @@ def sonar_naf_file2(resources_dir):
 def sonar_naf_object2(sonar_naf_file2):
     from KafNafParserPy import KafNafParser
     return KafNafParser(sonar_naf_file2)
+
+
+@pytest.fixture
+def sonar_naf_file3(resources_dir):
+    """
+    This file has a circular reference in it.
+    """
+    return os.path.join(resources_dir, 'SoNaR-WR-P-E-C-0000000021-in.naf')
+
+
+@pytest.fixture
+def sonar_naf_object3(sonar_naf_file3):
+    from KafNafParserPy import KafNafParser
+    return KafNafParser(sonar_naf_file3)

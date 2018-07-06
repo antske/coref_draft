@@ -40,6 +40,13 @@ def test_main_sonar2_without_fill(sonar_naf_object2, caplog):
     assert out.coreference_layer is not None
 
 
+@pytest.mark.slow
+def test_main_sonar3_without_fill(sonar_naf_object3, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(sonar_naf_object3, fill_gaps=False)
+    assert out.coreference_layer is not None
+
+
 def test_example_with_fill(example_naf_object, caplog):
     caplog.set_level('DEBUG', 'multisieve_coreference.dump')
     out = process_coreference(example_naf_object, fill_gaps=True)
@@ -56,4 +63,11 @@ def test_main_sonar1_with_fill(sonar_naf_object1, caplog):
 def test_main_sonar2_with_fill(sonar_naf_object2, caplog):
     caplog.set_level('DEBUG', 'multisieve_coreference.dump')
     out = process_coreference(sonar_naf_object2, fill_gaps=True)
+    assert out.coreference_layer is not None
+
+
+@pytest.mark.slow
+def test_main_sonar3_with_fill(sonar_naf_object3, caplog):
+    caplog.set_level('DEBUG', 'multisieve_coreference.dump')
+    out = process_coreference(sonar_naf_object3, fill_gaps=True)
     assert out.coreference_layer is not None
