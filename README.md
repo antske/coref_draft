@@ -43,6 +43,7 @@ Gaps in mention spans (mostly left-out punctuation marks) are not filled by defa
 Issues
 ------
  - [ ] Mentions are not ordered at all, in contrast to the description of the algorithm by Lee et al. (2013)
+ - [ ] Only one mention of the current coreference classes should be considered as antecedent candidate. See _3.2.1 Mention Selection in a Given Sieve_ in Lee et al. (2013)
  - [ ] Mention attributes are not shared among mentions in the same coreference class, in contrast to the description of the algorithm by Lee et al. (2013)
  - [ ] Alpino uses two types of dependencies ("deep" and "shallow"). Make sure these are handled correctly.
  - [ ] `global stop_words` should be a `set` (and not a global) and doesn't seem to be used consistently.
