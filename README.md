@@ -78,6 +78,16 @@ Contact
 * http://antskefokkens.info
 * Vrije University of Amsterdam
 
+
+Contributors
+------------
+
+* Martin van Harmelen
+* m.p.van.harmelen@vu.nl
+* martin@vanharmelen.com
+* Vrije Universiteit Amsterdam
+
+
 License
 ------
 Sofware distributed under Apache License v2.0, see LICENSE file for details.
