@@ -849,14 +849,13 @@ def main(argv=None):
                         default='WARNING')
     parser.add_argument(
         '-s',
-        '--include_singletons',
+        '--include-singletons',
         help="Whether to include singletons in the output",
         action='store_true',
-        dest='include_singletons'
     )
     parser.add_argument(
         '-f',
-        '--fill_gaps',
+        '--fill-gaps',
         help="Whether to fill gaps in mention spans",
         action='store_true',
     )
