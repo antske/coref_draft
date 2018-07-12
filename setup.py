@@ -14,6 +14,7 @@ setup(
     version='0.1.1',
     description='Basic coreference resolution module, based on multi-seive',
     long_description=readme,
+    long_description_content_type="text/markdown",
     author='Antske Fokkens',
     author_email='antske.fokkens@vu.nl',
     url='https://github.com/antske/coref_draft/',
