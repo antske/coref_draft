@@ -47,7 +47,7 @@ Issues
  - [ ] Mention attributes are not shared among mentions in the same coreference class, in contrast to the description of the algorithm by Lee et al. (2013)
  - [ ] Alpino uses two types of dependencies ("deep" and "shallow"). Make sure these are handled correctly.
  - [ ] `global stop_words` should be a `set` (and not a global) and doesn't seem to be used consistently.
- - [ ] `linguisticProcessors` layer should be added to `nafHeader`
+ - [X] `linguisticProcessors` layer should be added to `nafHeader`
  - [ ] `create_mention` docstring
  - [ ] `fem` and `masc` do not appear in output of Alpino, but _are_ used to identify gender
  - [ ] Many variables and functions use `id` in their name while they actually contain or use offsets.
