@@ -1,128 +1,19 @@
-from KafNafParserPy import *
-from .mention_data import *
-from collections import defaultdict
-import os
+import logging
+from collections import defaultdict, OrderedDict
 
-dep_extractor = None
-head2deps = defaultdict(list)
-dep2heads = defaultdict(list)
-stop_words = []
+from .mention_data import create_mention
+from .offset_info import (
+    convert_term_ids_to_offsets,
+    get_offsets_from_span,
+    get_offset
+)
+from .quotation import Cquotation
+from .constituent_info import get_named_entities, get_constituents
+from .quotation_naf import CquotationNaf
+from . import constituents as csts
+from .constituents import get_constituent
 
-
-class CquotationNaf:
-    '''
-    This class encodes source and quotation
-    '''
-
-    def __init__(self):
-        '''
-        Constructor for quotations object
-        '''
-        self.sip = ''
-        self.span = []
-        self.source = []
-        self.addressee = []
-        self.topic = []
-        self.beginquote = ''
-        self.endquote = ''
-
-    def add_span(self, span):
-
-        self.span = span
-
-    def add_span_id(self, span_id):
-
-        self.span.append(span_id)
-
-
-class Cconstituent_information:
-    '''
-    This class contains the main constructional information of mentions
-    '''
-
-    def __init__(self, head_id, span = []):
-        '''
-        Constructor for the constituent object
-        :param head_id: term id of the head of the constituent
-        :param span: list of term ids providing full span of hte constituent
-        '''
-        self.head_id = head_id
-        self.span = span
-        self.multiword = []
-        self.modifiers = []
-        self.appositives = []
-        self.predicatives = []
-        self.etype = ''
-
-    def set_span(self, span):
-
-        self.span = span
-
-    def get_span(self):
-
-        return self.span
-
-    def set_multiword(self, mw):
-
-        self.multiword = mw
-
-    def get_multiword(self):
-
-        return self.multiword
-
-    def set_modifiers(self, mods):
-
-        self.modifiers = mods
-
-    def add_modifier(self, mod):
-
-        self.modifiers.append(mod)
-
-    def get_modifiers(self):
-
-        return self.modifiers
-
-    def set_appositives(self, apps):
-
-        self.appositives = apps
-
-    def add_appositive(self, app):
-
-        self.appositives.append(app)
-
-    def get_appositives(self):
-
-        return self.appositives
-
-    def set_predicatives(self, preds):
-
-        self.predicatives = preds
-
-    def add_predicative(self, pred):
-
-        self.predicatives.append(pred)
-
-    def get_predicatives(self):
-
-        return self.predicatives
-
-    def set_etype(self, etype):
-
-        self.etype = etype
-
-    def get_etype(self):
-
-        return self.etype
-
-
-def get_constituent(head):
-
-    global dep_extractor
-
-    mydeps = dep_extractor.get_full_dependents(head, [])
-    if not head in mydeps:
-        mydeps.append(head)
-    return mydeps
+logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 
 def get_relevant_head_ids(nafobj):
@@ -132,139 +23,35 @@ def get_relevant_head_ids(nafobj):
     :return: list of term ids (string)
     '''
 
-    nominal_pos = ['noun','pron','name']
+    nominal_pos = ['noun', 'pron', 'name']
     mention_heads = []
     for term in nafobj.get_terms():
         pos_tag = term.get_pos()
         if pos_tag in nominal_pos:
             mention_heads.append(term.get_id())
-        #check if possessive pronoun
+        # check if possessive pronoun
         elif pos_tag == 'det' and 'VNW(bez' in term.get_morphofeat():
             mention_heads.append(term.get_id())
 
     return mention_heads
 
 
-def get_constituents(nafobj, mention_heads):
-
-    global dep_extractor
-
-    #global head2deps & check dependents?
-
-    dep_extractor = nafobj.get_dependency_extractor()
-    constituents = {}
-    for head in mention_heads:
-        mydeps = get_constituent(head)
-        myConstituent = Cconstituent_information(head, mydeps)
-        mwe, mods, apps = get_mwe_and_modifiers_and_appositives(head)
-        myConstituent.set_multiword(mwe)
-        myConstituent.set_modifiers(mods)
-        myConstituent.set_appositives(apps)
-        add_predicative_information(head, myConstituent)
-        constituents[head] = myConstituent
-
-    return constituents
-
-def verify_span_uniqueness(found_spans, span):
-    '''
-    Function that checks whether entity is not listed twice (bug in cltl-spotlight; does not check whether entity has already been found
-    :param found_spans: list of previously found spans
-    :param span: current span
-    :return: boolean (True if span has not been found before)
-    '''
-
-    for fspan in found_spans:
-        if len(set(fspan) & set(span)) == len(span):
-            return False
-    return True
-
-
-def find_closest_to_head(span):
-
-    if len(span) == 1:
-        return span[0]
-
-    head_term_candidates = defaultdict(list)
-
-    for tid in span:
-        if tid in head2deps:
-            count = 0
-            for deprel in head2deps:
-                if deprel[0] in span:
-                    count += 1
-            head_term_candidates[count].append(tid)
-    if len(head_term_candidates) > 0:
-        max_deps = sorted(head_term_candidates.keys())[-1]
-        best_candidates = head_term_candidates.get(max_deps)
-        if len(best_candidates) > 0:
-            return best_candidates[0]
-
-    return span[0]
-
-
-def find_head_in_span(span):
-    '''
-    Function that return the identifier of the head in the span
-    :param span: list of term identiers
-    :return: term_id
-    '''
-
-    head_term = None
-    for term in span:
-        constituent = get_constituent(term)
-        constituent.append(term)
-        if set(span).issubset(set(constituent)):
-            if head_term is None:
-                head_term = term
-       #     else:
-       #         print('span has more than one head')
-    if head_term is None:
-        head_term = find_closest_to_head(span)
-    return head_term
-
-
-
-def get_named_entities(nafobj):
-    '''
-    Function that runs to entity layer and registers named entities
-    :param nafobj: the input nafobject
-    :return: dictionary of entities, linked to span and entity type
-    '''
-    entities = {}
-    found_spans = []
-    for entity in nafobj.get_entities():
-        etype = entity.get_type()
-        for ref in entity.get_references():
-            espan = ref.get_span().get_span_ids()
-            head_term = find_head_in_span(espan)
-            full_span = get_constituent(head_term)
-            myConstituent = Cconstituent_information(head_term, full_span)
-            myConstituent.set_multiword(espan)
-            mwe, mods, apps = get_mwe_and_modifiers_and_appositives(head_term)
-            myConstituent.set_modifiers(mods)
-            myConstituent.set_etype(etype)
-            myConstituent.set_appositives(apps)
-            add_predicative_information(head_term, myConstituent)
-            if verify_span_uniqueness(found_spans, espan):
-
-                if not head_term in entities:
-                    entities[head_term] = myConstituent
-                else:
-                    entities[head_term + 'b'] = myConstituent
-                found_spans.append(espan)
-
-    return entities
-
-
-
 def get_mention_spans(nafobj):
     '''
-    Function explores various layers of nafobj and retrieves all mentions possibly referring to an entity
-    :param nafobj: input nafobj
-    :return: dictionary of head term with as value constituent object (head id full head, modifiers, complete constituent0
+    Function explores various layers of nafobj and retrieves all mentions
+    possibly referring to an entity
+
+    :param nafobj:  input nafobj
+    :return:        dictionary of head term with as value constituent object
     '''
     mention_heads = get_relevant_head_ids(nafobj)
-    mention_constituents = get_constituents(nafobj, mention_heads)
+    logger.debug("Mention candidate heads: {!r}".format(mention_heads))
+    mention_constituents = get_constituents(mention_heads)
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        import itertools as it
+        logger.debug("Mention candidate constituents: {}".format('\n'.join(
+            it.starmap('{}: {!r}'.format, mention_constituents.items())
+        )))
     return mention_constituents
 
 
@@ -300,188 +87,6 @@ def get_string_of_span(nafobj, span):
     return mstring
 
 
-def get_pos_of_term(nafobj, tid):
-
-    term = nafobj.get_term(tid)
-    return term.get_pos()
-
-def get_pos_of_span(nafobj, span):
-
-    pos_seq = []
-    for tid in span:
-        tpos = get_pos_of_term(nafobj, tid)
-        pos_seq.append(tpos)
-
-    return pos_seq
-
-def identify_and_set_person(morphofeat, mention):
-
-    if '1' in morphofeat:
-        mention.set_person('1')
-    elif '2' in morphofeat:
-        mention.set_person('2')
-    elif '3' in morphofeat:
-        mention.set_person('3')
-
-
-def identify_and_set_number(morphofeat, myterm, mention):
-
-    if 'ev' in morphofeat:
-        mention.set_number('ev')
-    elif 'mv' in morphofeat:
-        mention.set_number('mv')
-    elif 'getal' in morphofeat:
-        lemma = myterm.get_lemma()
-        if lemma in ['haar','zijn','mijn','jouw','je']:
-            mention.set_number('ev')
-        elif lemma in ['ons','jullie','hun']:
-            mention.set_number('mv')
-
-
-def identify_and_set_gender(morphofeat, mention):
-
-    if 'fem' in morphofeat:
-        mention.set_number('fem')
-    elif 'masc' in morphofeat:
-        mention.set_number('masc')
-    elif 'onz,' in morphofeat:
-        mention.set_number('neut')
-
-def set_is_relative_pronoun(morphofeat, mention):
-
-    if 'betr,' in morphofeat:
-        mention.set_relative_pronoun(True)
-    if 'refl,' in morphofeat:
-        mention.set_reflective_pronoun(True)
-
-
-
-def analyze_nominal_information(nafobj, term_id, mention):
-
-    myterm = nafobj.get_term(term_id)
-    morphofeat = myterm.get_morphofeat()
-    identify_and_set_person(morphofeat, mention)
-    identify_and_set_gender(morphofeat, mention)
-    identify_and_set_number(morphofeat, myterm, mention)
-    set_is_relative_pronoun(morphofeat, mention)
-
-
-def add_non_stopwords(nafobj, span, mention):
-    '''
-    Function that verifies which terms in span are not stopwords and adds these to non-stop-word list
-    :param nafobj: input naf (for linguistic information)
-    :param span: list of term ids
-    :param mention: mention object
-    :return:
-    '''
-    global stop_words
-    non_stop_terms = []
-
-    for tid in span:
-        my_term = nafobj.get_term(tid)
-        if not my_term.get_type() == 'closed' and not my_term.get_lemma().lower() in stop_words:
-            non_stop_terms.append(tid)
-
-    non_stop_span = get_span_in_offsets(nafobj, non_stop_terms)
-    mention.set_no_stop_words(non_stop_span)
-
-def add_main_modifiers(nafobj, span, mention):
-    '''
-    Function that creates list of all modifiers that are noun or adjective (possibly including head itself)
-    :param nafobj: input naf
-    :param span: list of term ids
-    :param mention: mention object
-    :return:
-    '''
-
-    main_mods = []
-    for tid in span:
-        term = nafobj.get_term(tid)
-        if term.get_pos() in ['adj','noun']:
-            main_mods.append(tid)
-
-    main_mods_offset = get_span_in_offsets(nafobj, main_mods)
-    mention.set_main_modifiers(main_mods_offset)
-
-
-def get_sentence_number(nafobj, head):
-
-    myterm = nafobj.get_term(head)
-    tokid = myterm.get_span().get_span_ids()[0]
-    mytoken = nafobj.get_token(tokid)
-    sent_nr = int(mytoken.get_sent())
-
-    return sent_nr
-
-
-
-
-def create_mention(nafobj, constituentInfo, head, mid):
-    '''
-    Function that creates mention object from naf information
-    :param nafobj: the input naffile
-    :param span: the mention span
-    :param span: the id of the constituent's head
-    :param idnr: the idnr (for creating a unique mention id
-    :return:
-    '''
-
-    if head is None:
-        head_id = head
-    else:
-        head_id = get_offset(nafobj, head)
-
-    span = constituentInfo.get_span()
-    offset_ids_span = get_span_in_offsets(nafobj, span)
-    mention = Cmention(mid, span=offset_ids_span, head_id=head_id)
-    sentence_number = get_sentence_number(nafobj, head)
-    mention.set_sentence_number(sentence_number)
-    #add no stop words and main modifiers
-    add_non_stopwords(nafobj, span, mention)
-    add_main_modifiers(nafobj, span, mention)
-    #mwe info
-    full_head_tids = constituentInfo.get_multiword()
-    full_head_span = get_span_in_offsets(nafobj, full_head_tids)
-    mention.set_full_head(full_head_span)
-    #modifers and appositives:
-    relaxed_span = offset_ids_span
-    for mod_in_tids in constituentInfo.get_modifiers():
-        mod_span = get_span_in_offsets(nafobj, mod_in_tids)
-        mention.add_modifier(mod_span)
-        for mid in mod_span:
-            if mid > head_id and mid in relaxed_span:
-                relaxed_span.remove(mid)
-    for app_in_tids in constituentInfo.get_appositives():
-        app_span = get_span_in_offsets(nafobj, app_in_tids)
-        mention.add_appositive(app_span)
-        for mid in app_span:
-            if mid > head_id and mid in relaxed_span:
-                relaxed_span.remove(mid)
-    mention.set_relaxed_span(relaxed_span)
-
-    for pred_in_tids in constituentInfo.get_predicatives():
-        pred_span = get_span_in_offsets(nafobj, pred_in_tids)
-        mention.add_predicative(pred_span)
-
-    #set sequence of pos FIXME: if not needed till end; remove
-    #os_seq = get_pos_of_span(nafobj, span)
-    #mention.set_pos_seq(pos_seq)
-    #set pos of head
-    if head != None:
-        head_pos = get_pos_of_term(nafobj, head)
-        mention.set_head_pos(head_pos)
-        if head_pos in ['pron','noun','name']:
-            analyze_nominal_information(nafobj, head, mention)
-
-    begin_offset, end_offset = get_offsets_from_span(nafobj, span)
-    mention.set_begin_offset(begin_offset)
-    mention.set_end_offset(end_offset)
-
-    return mention
-
-
-
-
 def merge_two_mentions(mention1, mention2):
     '''
     Merge information from mention 1 into mention 2
@@ -489,47 +94,47 @@ def merge_two_mentions(mention1, mention2):
     :param mention2:
     :return: updated mention
     '''
-
-    if mention1.head_id == mention2.head_id:
+    # FIXME; The comments here do not correspond to the code and therefore the
+    #        code may be horribly wrong.
+    if mention1.head_offset == mention2.head_offset:
         if set(mention1.span) == set(mention2.span):
-            #if mention1 does not have entity type, take the one from entity 2
-            if mention2.get_entity_type() is None:
-                mention2.set_entity_type(mention1.get_entity_type())
+            # if mention1 does not have entity type, take the one from entity 2
+            if mention2.entity_type is None:
+                mention2.entity_type = mention1.entity_type
         else:
-            #if mention2 has no entity type, it's span is syntax based (rather than from the NERC module)
-            if mention1.get_entity_type() is None:
-                mention2.set_span(mention1.get_span())
+            # if mention2 has no entity type, it's span is syntax based
+            # (rather than from the NERC module)
+            if mention1.entity_type is None:
+                mention2.span = mention1.span
     else:
-        if mention1.get_entity_type() is None:
-            mention2.set_head_id(mention1.get_head_id())
+        if mention1.entity_type is None:
+            mention2.head_offset = mention1.head_offset
         else:
-            mention2.set_entity_type(mention1.get_entity_type())
+            mention2.entity_type = mention1.entity_type
 
     return mention2
 
 
-
-def merge_mentions(mentions, heads):
+def merge_mentions(mentions):
     '''
     Function that merges information from entity mentions
     :param mentions: dictionary mapping mention number to specific mention
-    :param heads: dictionary mapping head id to mention number
     :return: list of mentions where identical spans are merged
     '''
 
     final_mentions = {}
 
-    #TODO: create merge function and merge identical candidates
+    # TODO: create merge function and merge identical candidates
 
     for m, val in mentions.items():
         found = False
         for prevm, preval in final_mentions.items():
-            if val.head_id == preval.head_id:
+            if val.head_offset == preval.head_offset:
                 updated_mention = merge_two_mentions(val, preval)
                 final_mentions[prevm] = updated_mention
                 found = True
             elif set(val.span) == set(preval.span):
-               # print('same_set')
+                # print('same_set')
                 updated_mention = merge_two_mentions(val, preval)
                 final_mentions[prevm] = updated_mention
                 found = True
@@ -539,119 +144,6 @@ def merge_mentions(mentions, heads):
     return final_mentions
 
 
-def get_offsets_from_span(nafobj, span):
-    '''
-    Function that identifies begin and end offset for a span of terms
-    :param nafobj: input naf
-    :param span: list of term identifiers
-    :return:
-    '''
-
-    offsets = []
-    end_offsets = []
-    for termid in span:
-        offset = get_offset(nafobj, termid)
-        length = get_term_length(nafobj, termid)
-        offsets.append(offset)
-        end_offsets.append(offset+length)
-
-    begin_offset = 0
-    end_offset = 0
-    if len(offsets) > 0:
-        begin_offset = sorted(offsets)[0]
-        end_offset = sorted(end_offsets)[-1]
-
-    return begin_offset, end_offset
-
-
-def get_term_length(nafobj, term_id):
-    '''
-    Function that returns the length of a term
-    :param nafobj: input naf
-    :param term_id: id of term in question
-    :return:
-    '''
-
-    my_term = nafobj.get_term(term_id)
-    length = 0
-    expected_offset = 0
-    for wid in my_term.get_span().get_span_ids():
-        my_token = nafobj.get_token(wid)
-        offset = int(my_token.get_offset())
-        token_length = int(my_token.get_length())
-        length += token_length
-        if expected_offset != 0 and expected_offset != offset:
-            length += offset - expected_offset
-        expected_offset = offset + token_length
-
-    return length
-
-
-def get_offset(nafobj, term_id):
-    '''
-    Function that returns beginning offset of term
-    :param nafobj: input naf
-    :param term_id: id of term in question
-    :return:
-    '''
-
-    my_term = nafobj.get_term(term_id)
-    offsets = []
-    for wid in my_term.get_span().get_span_ids():
-        my_token = nafobj.get_token(wid)
-        offsets.append(int(my_token.get_offset()))
-
-    term_offset = sorted(offsets)[0]
-    return term_offset
-
-
-def get_mwe_and_modifiers_and_appositives(head_id):
-    '''
-    Function that identifies full mwe head and posthead modifiers
-    :param head_id: head_id
-    :return: list of full head terms, list of posthead modifiers
-    '''
-
-    global head2deps, dep2heads
-
-    mwe = [head_id]
-    mods = []
-    apps = []
-
-    if head_id in head2deps:
-        for deprel in head2deps.get(head_id):
-            if deprel[1] == 'mwp/mwp':
-                mwe.append(head_id)
-            elif deprel[1] == 'hd/mod':
-                dep_constituent = get_constituent(deprel[0])
-                mods.append(dep_constituent)
-            elif deprel[1] == 'hd/app':
-                dep_constituent = get_constituent(deprel[0])
-                apps.append(dep_constituent)
-
-    return mwe, mods, apps
-
-
-def add_predicative_information(head_id, myConstituent):
-    '''
-    Function that checks if mention is subject in a predicative structure and, if so, adds predicative info to constituent object
-    :param head_id: identifier of the head of the mention
-    :param myConstituent: constituent object
-    :return:
-    '''
-
-    global head2deps, dep2heads
-
-    if head_id in dep2heads:
-        for headrel in dep2heads.get(head_id):
-            if headrel[1] == 'hd/su':
-                headscomps = head2deps.get(headrel[0])
-                for deprel in headscomps:
-                    if deprel[1] in ['hd/predc','hd/predm']:
-                        predicative = get_constituent(deprel[0])
-                        myConstituent.add_predicative(predicative)
-
-
 def get_mentions(nafobj):
     '''
     Function that creates mention objects based on mentions retrieved from NAF
@@ -659,131 +151,29 @@ def get_mentions(nafobj):
     :return: list of Cmention objects
     '''
 
-    initiate_stopword_list()
-    create_headdep_dicts(nafobj)
-
     mention_spans = get_mention_spans(nafobj)
-    mentions = {}
-    heads = defaultdict(list)
+    mentions = OrderedDict()
     for head, constituentInfo in mention_spans.items():
         mid = 'm' + str(len(mentions))
         mention = create_mention(nafobj, constituentInfo, head, mid)
         mentions[mid] = mention
-        heads[head].append(mid)
 
     entities = get_named_entities(nafobj)
     for entity, constituent in entities.items():
         mid = 'm' + str(len(mentions))
         mention = create_mention(nafobj, constituent, entity, mid)
-        mention.set_entity_type(constituent.get_etype())
+        mention.entity_type = constituent.etype
         mentions[mid] = mention
-        heads[entity].append(mid)
 
-    mentions = merge_mentions(mentions, heads)
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        from .util import view_mentions
+        logger.debug(
+            "Mentions before merging: {}".format(view_mentions(nafobj, mentions))
+        )
+
+    mentions = merge_mentions(mentions)
 
     return mentions
-
-
-def get_starting_count(nafobj):
-
-    coref_counter = 1
-    for coref in nafobj.get_corefs():
-        coref_counter += 1
-
-    return coref_counter
-
-
-def get_terms_from_offsets(nafobj, offset_span, head_offset = -1):
-
-    wids = []
-    head_wid = ''
-    for token in nafobj.get_tokens():
-        if int(token.get_offset()) in offset_span:
-            wids.append(token.get_id())
-            if int(token.get_offset()) == head_offset:
-                head_wid = token.get_id()
-
-    tids = []
-    head_tid = ''
-    for term in nafobj.get_terms():
-        if term.get_span().get_span_ids()[0] in wids:
-            tids.append(term.get_id())
-        if head_wid in term.get_span().get_span_ids():
-            head_tid = term.get_id()
-
-    return tids, head_tid
-
-def get_span_in_offsets(nafobj, span):
-
-    offset_span = []
-    for tid in span:
-        toffset = get_offset(nafobj, tid)
-        offset_span.append(toffset)
-    return offset_span
-
-def create_span(term_id_span, head_id):
-    '''
-    Creates naf span object where head id is set
-    :param term_id_span: list of term ids
-    :param head_id: identifier for the head id
-    :return: naf span object
-    '''
-
-    mySpan = Cspan()
-    for term in term_id_span:
-        if term == head_id:
-            myTarget = Ctarget()
-            myTarget.set_id(term)
-            myTarget.set_as_head()
-            mySpan.add_target(myTarget)
-        else:
-            mySpan.add_target_id(term)
-    return mySpan
-
-
-def get_ordered_coreference_chains(corefclasses, mentions):
-    '''
-    Function that creates new coreference dictionary with index of first mention as key (for ordering
-    :param corefclasses: identified coreference classes
-    :return: dictionary of coreference classes with new indeces
-    '''
-
-    coref_dict = {}
-
-    for mids in corefclasses.values():
-        if mids is not None:
-            first_index = 90000000000
-            for mid in mids:
-                mention = mentions.get(mid)
-                if mention.head_id < first_index:
-                    first_index = mention.head_id
-            coref_dict[first_index] = mids
-
-    return coref_dict
-
-
-
-def add_coreference_to_naf(nafobj, corefclasses, mentions):
-
-    #FIXME: (detail) for readability, add coreference chains in order
-    start_count = get_starting_count(nafobj)
-    coref_according_to_index = get_ordered_coreference_chains(corefclasses, mentions)
-    for key in sorted(coref_according_to_index):
-        mids = coref_according_to_index.get(key)
-        if not mids is None:
-            mids = set(mids)
-            if len(mids) > 1:
-                nafCoref = Ccoreference()
-                cid = 'co' + str(start_count)
-                start_count += 1
-                nafCoref.set_id(cid)
-                nafCoref.set_type('entity')
-                for mid in mids:
-                    mention = mentions.get(mid)
-                    term_id_span, head_id = get_terms_from_offsets(nafobj,mention.span,mention.head_id)
-                    coref_span = create_span(term_id_span, head_id)
-                    nafCoref.add_span_object(coref_span)
-                nafobj.add_coreference(nafCoref)
 
 
 def get_quotation_spans(nafobj):
@@ -793,13 +183,15 @@ def get_quotation_spans(nafobj):
     :return: list of quotation objects with span defined
     '''
 
-    #FIXME investigate on development corpus what to do with embedded quotations; for now we'll assume a double quotation within a single quote is an error
+    # FIXME investigate on development corpus what to do with embedded
+    # quotations; for now we'll assume a double quotation within a single
+    # quote is an error
 
     in_double_quotation = False
     in_single_quotation = False
     quotations = []
     for term in nafobj.get_terms():
-        if term.get_lemma() in ['"','&amp;amp;amp;quot;']:
+        if term.get_lemma() in ['"', '&amp;amp;amp;quot;']:
             if not in_double_quotation:
                 in_double_quotation = True
                 myQuote = CquotationNaf()
@@ -808,7 +200,7 @@ def get_quotation_spans(nafobj):
                 in_double_quotation = False
                 myQuote.endquote = term.get_id()
                 quotations.append(myQuote)
-            #break off single quotation if double quotation found during this
+            # break off single quotation if double quotation found during this
             if in_single_quotation:
                 in_single_quotation = False
         elif in_double_quotation:
@@ -829,24 +221,6 @@ def get_quotation_spans(nafobj):
     return quotations
 
 
-
-def create_headdep_dicts(nafobj):
-    '''
-    Function that creates dictionaries of dep to heads and head to deps
-    :param nafobj: nafobj from input file
-    :return: None
-    '''
-
-    global head2deps, dep2heads
-
-
-    for dep in nafobj.get_dependencies():
-        head = dep.get_from()
-        mydep = dep.get_to()
-        relation = dep.get_function()
-        dep2heads[mydep].append([head, relation])
-        head2deps[head].append([mydep, relation])
-
 def create_set_of_tids_from_tidfunction(tidfunctionlist):
 
     tids = set()
@@ -855,10 +229,11 @@ def create_set_of_tids_from_tidfunction(tidfunctionlist):
 
     return tids
 
+
 def find_relevant_spans(deps, outside_ids):
 
     for dep in deps:
-        if dep[0] in outside_ids and dep[1] in ['nucl/tag','dp/dp']:
+        if dep[0] in outside_ids and dep[1] in ['nucl/tag', 'dp/dp']:
             return dep[0]
 
     return None
@@ -870,8 +245,8 @@ def analyze_head_relations(nafobj, head_term, head2deps):
     speaker = None
     addressee = None
     topic = None
-    #FIXME: we want to check the preposition
-    #FIXME: no dependents case does occur; check with bigger corpus
+    # FIXME: we want to check the preposition
+    # FIXME: no dependents case does occur; check with bigger corpus
     if dependents is not None:
         for dep in dependents:
             if dep[1] == 'hd/su':
@@ -890,14 +265,14 @@ def analyze_head_relations(nafobj, head_term, head2deps):
                 if term.get_pos() == 'prep':
 
                     if dep[0] in head2deps:
-                        #override addressee by complement if headed by preposition
+                        # override addressee by complement if headed by
+                        # preposition
                         for deprel in head2deps.get(dep[0]):
                             if deprel[1] == 'hd/obj1':
                                 if term.get_lemma() == 'tegen':
                                     addressee = get_constituent(deprel[0])
                                 elif term.get_lemma() == 'over':
                                     topic = get_constituent(deprel[0])
-
 
     return speaker, addressee, topic
 
@@ -910,36 +285,40 @@ def identify_direct_links_to_sip(nafobj, quotation):
     :return: boolean indicating whether source was found
     '''
 
-    global head2deps
-
     for tid in quotation.span:
-        deps = head2deps.get(tid)
-        if not deps is None:
-            depids = create_set_of_tids_from_tidfunction(deps)
-            #if one of deps falls outside of quote, it can be linked to the sip
-            span_with_quotes = quotation.span + [quotation.beginquote] + [quotation.endquote]
-            if len(depids.difference(set(span_with_quotes))) > 0:
-                my_joint_set = depids.difference(set(span_with_quotes))
+        deps = csts.head2deps.get(tid)
+        if deps is not None:
+            # The first element of every tuple
+            depids = set(next(iter(zip(*deps))))
+            # if one of deps falls outside of quote, it can be linked to the
+            # sip
+            span_with_quotes = quotation.span + [
+                quotation.beginquote, quotation.endquote
+            ]
+            my_joint_set = depids.difference(span_with_quotes)
+            if len(my_joint_set) > 0:
                 head_term = find_relevant_spans(deps, my_joint_set)
-                if not head_term is None:
-                    speaker, addressee, topic = analyze_head_relations(nafobj, head_term, head2deps)
-                    if not speaker is None:
-                        speaker_in_offsets = get_span_in_offsets(nafobj, speaker)
+                if head_term is not None:
+                    speaker, addressee, topic = analyze_head_relations(
+                        nafobj, head_term, csts.head2deps)
+                    if speaker is not None:
+                        speaker_in_offsets = convert_term_ids_to_offsets(
+                            nafobj, speaker)
                         quotation.source = speaker_in_offsets
-                    if not addressee is None:
-                        addressee_in_offsets = get_span_in_offsets(nafobj, addressee)
+                    if addressee is not None:
+                        addressee_in_offsets = convert_term_ids_to_offsets(
+                            nafobj, addressee)
                         quotation.addressee = addressee_in_offsets
-                    if not topic is None:
-                        topic_in_offsets = get_span_in_offsets(nafobj, topic)
+                    if topic is not None:
+                        topic_in_offsets = convert_term_ids_to_offsets(
+                            nafobj, topic)
                         quotation.topic = topic_in_offsets
 
 
 def check_if_quotation_contains_dependent(quotation):
-
-    global dep2heads
     #FIXME: verify on larger set of development corpus whether this behavior is correct
     for tid in quotation.span:
-        heads = dep2heads.get(tid)
+        heads = csts.dep2heads.get(tid)
         if not heads is None:
             headids = create_set_of_tids_from_tidfunction(heads)
             span_with_quotes = quotation.span + [quotation.beginquote] + [quotation.endquote]
@@ -950,7 +329,7 @@ def check_if_quotation_contains_dependent(quotation):
                             if headrel[1] in ['cmp/body','hd/predc','hd/obj1','hd/vc','hd/su','hd/pc']:
                                 return False
                             elif headrel[1] in ['crd/cnj']:
-                                motherheadrels = dep2heads.get(headrel[0])
+                                motherheadrels = csts.dep2heads.get(headrel[0])
                                 if motherheadrels is not None:
                                     for mhid in motherheadrels:
                                         if mhid[1] in ['cmp/body','hd/predc','hd/obj1','hd/vc','hd/su','hd/pc']:
@@ -992,14 +371,11 @@ def get_previous_and_next_sentence(sentences):
     return previous_sentence, following_sentence
 
 def retrieve_sentence_preceding_sip(nafobj, terms):
-
-    global head2deps
-
     source_head = None
     for tid in terms:
         myterm = nafobj.get_term(tid)
         if myterm.get_lemma() == 'volgens':
-            deps = head2deps.get(tid)
+            deps = csts.head2deps.get(tid)
             if deps is not None:
                 for dep in deps:
                     if dep[1] == 'hd/obj1':
@@ -1010,13 +386,11 @@ def retrieve_sentence_preceding_sip(nafobj, terms):
 
 def retrieve_quotation_following_sip(nafobj, terms):
 
-    global head2deps
-
     source_head = None
     for tid in terms:
         myterm = nafobj.get_term(tid)
         if myterm.get_lemma() == 'aldus':
-            deps = head2deps.get(tid)
+            deps = csts.head2deps.get(tid)
             if deps is not None:
                 for dep in deps:
                     if dep[1] == 'hd/obj1':
@@ -1027,20 +401,19 @@ def retrieve_quotation_following_sip(nafobj, terms):
 
 def identify_addressee_or_topic_relations(nafobj, tid, quotation):
 
-    global dep2heads
     #FIXME: language specific function
-    heads = dep2heads.get(tid)
+    heads = csts.dep2heads.get(tid)
     if heads is not None:
         for headrel in heads:
             headterm = nafobj.get_term(headrel[0])
             if headterm.get_lemma() == 'tegen' or headrel[1] == 'hd/obj2':
                 myconstituent = get_constituent(headterm.get_id())
-                addressee = get_span_in_offsets(nafobj, myconstituent)
+                addressee = convert_term_ids_to_offsets(nafobj, myconstituent)
                 quotation.addressee = addressee
                 return True
             elif headterm.get_lemma() == 'over':
                 myconstituent = get_constituent(headterm.get_id())
-                topic = get_span_in_offsets(nafobj, myconstituent)
+                topic = convert_term_ids_to_offsets(nafobj, myconstituent)
                 quotation.topic = topic
                 return True
     return False
@@ -1087,12 +460,10 @@ def get_closest(candidates):
 
 def identify_primary_candidate(candidates):
 
-    global dep2heads
-
     for cand in candidates:
         for tid in cand:
-            if tid in dep2heads:
-                for headrel in dep2heads:
+            if tid in csts.dep2heads:
+                for headrel in csts.dep2heads:
                     if headrel[1] == 'hd/su':
                         return cand
 
@@ -1116,11 +487,11 @@ def find_name_or_pronoun(nafobj, preceding_terms, quotation):
         if len(remaining_candidates) > 0:
             candidates = extract_full_names_or_prons(nafobj, remaining_candidates)
             if len(candidates) == 1:
-                candidate_in_offsets = get_span_in_offsets(nafobj, candidates[0])
+                candidate_in_offsets = convert_term_ids_to_offsets(nafobj, candidates[0])
                 quotation.source = candidate_in_offsets
             else:
                 candidate = identify_primary_candidate(candidates)
-                candidate_in_offsets = get_span_in_offsets(nafobj, candidate)
+                candidate_in_offsets = convert_term_ids_to_offsets(nafobj, candidate)
                 quotation.source = candidate_in_offsets
 
 
@@ -1137,10 +508,9 @@ def create_ordered_number_span(term_list):
 
     return sorted(number_list)
 
+
 def get_preceding_terms_in_sentence(first_sentence, quotation_span):
-
-
-    #FIXME; move to offset based ids earlier; then this hack is not necessary
+    # FIXME; move to offset based ids earlier; then this hack is not necessary
     quotation_numbers = create_ordered_number_span(quotation_span)
     preceeding_terms = []
     if len(quotation_numbers) > 0:
@@ -1155,9 +525,10 @@ def get_preceding_terms_in_sentence(first_sentence, quotation_span):
                     preceeding_terms.append(tid)
     return preceeding_terms
 
+
 def get_following_terms_in_sentence(last_sentence, quotation_span):
 
-    #FIXME; move to offset based ids earlier; then this hack is not necessary
+    # FIXME; move to offset based ids earlier; then this hack is not necessary
     quotation_numbers = create_ordered_number_span(quotation_span)
     following_terms = []
     for tid in last_sentence:
@@ -1198,7 +569,7 @@ def identify_source_introducing_constructions(nafobj, quotation, sentence_to_ter
 
     if source_head is not None:
         source_constituent = get_constituent(source_head)
-        source_in_offsets = get_span_in_offsets(nafobj, source_constituent)
+        source_in_offsets = convert_term_ids_to_offsets(nafobj, source_constituent)
         quotation.source = source_in_offsets
     else:
         find_name_or_pronoun(nafobj, preceding_terms, quotation)
@@ -1243,22 +614,25 @@ def identify_direct_quotations(nafobj, mentions):
     '''
 
     nafquotations = get_quotation_spans(nafobj)
-    create_headdep_dicts(nafobj)
     toremove = []
     for quotation in nafquotations:
         identify_direct_links_to_sip(nafobj, quotation)
         if len(quotation.source) == 0:
-            #this can lead to indication of quotation being attribution rather than quotation
+            # this can lead to indication of quotation being attribution rather
+            # than quotation
             if check_if_quotation_contains_dependent(quotation):
                 sentence_to_terms = get_sentence_to_terms(nafobj)
-                identify_source_introducing_constructions(nafobj, quotation, sentence_to_terms)
+                identify_source_introducing_constructions(
+                    nafobj, quotation, sentence_to_terms)
             else:
                 toremove.append(quotation)
 
-    finalnafquotations = get_reduced_list_of_quotations(toremove, nafquotations)
+    finalnafquotations = get_reduced_list_of_quotations(
+        toremove, nafquotations)
     quotations = []
     for qid, nafquotation in enumerate(finalnafquotations):
-        myquote = create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qid)
+        myquote = create_coref_quotation_from_quotation_naf(
+            nafobj, nafquotation, mentions, qid)
         quotations.append(myquote)
 
     return quotations
@@ -1294,54 +668,43 @@ def create_coref_quotation_from_quotation_naf(nafobj, nafquotation, mentions, qu
 
     myQuote = Cquotation(quote_id)
 
-    quotespan = get_span_in_offsets(nafobj, nafquotation.span)
-    myQuote.set_span(quotespan)
+    quotespan = convert_term_ids_to_offsets(nafobj, nafquotation.span)
+    myQuote.span = quotespan
 
     quotestring = get_string_of_span(nafobj, nafquotation.span)
-    myQuote.set_string(quotestring)
+    myQuote.string = quotestring
 
     beginoffset, endoffset = get_offsets_from_span(nafobj, nafquotation.span)
-    myQuote.set_begin_offset(beginoffset)
-    myQuote.set_end_offset(endoffset)
+    myQuote.begin_offset = beginoffset
+    myQuote.end_offset = endoffset
 
     if len(nafquotation.source) > 0:
         source_mention_id = link_span_ids_to_mentions(nafquotation.source, mentions)
-        myQuote.set_source(source_mention_id)
+        myQuote.source = source_mention_id
     if len(nafquotation.addressee) > 0:
         addressee_mention_id = link_span_ids_to_mentions(nafquotation.addressee, mentions)
-        myQuote.set_addressee(addressee_mention_id)
+        myQuote.addressee = addressee_mention_id
     if len(nafquotation.topic) > 0:
         topic_mention_id = link_span_ids_to_mentions(nafquotation.topic, mentions)
-        myQuote.set_topic(topic_mention_id)
+        myQuote.topic = topic_mention_id
 
     return myQuote
 
 
-def initiate_stopword_list(lang='nl'):
+def get_offset2string_dicts(nafobj):
 
-    global stop_words
-    resources = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources"))
-    
-    stopfile = open(os.path.join(resources, lang, 'stop_words.txt'),'r')
-    for line in stopfile:
-        stop_words.append(line.rstrip())
-
-    stopfile.close()
-
-def initiate_id2string_dicts(nafobj):
-
-    id2string = {}
-    id2lemma = {}
+    offset2string = {}
+    offset2lemma = {}
 
     for term in nafobj.get_terms():
         identifier = get_offset(nafobj, term.get_id())
         lemma = term.get_lemma()
-        id2lemma[identifier] = lemma
+        offset2lemma[identifier] = lemma
 
     for token in nafobj.get_tokens():
         identifier = int(token.get_offset())
         surface_string = token.get_text()
-        id2string[identifier] = surface_string
+        offset2string[identifier] = surface_string
 
-    return id2string, id2lemma
+    return offset2string, offset2lemma
 

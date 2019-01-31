@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NAF xml:lang="nl" version="3.0">
+  <nafHeader>
+    <linguisticProcessors layer="terms">
+      <lp name="Morphosyntactic parser based on Alpino" timestamp="2018-06-12T11:15:30UTC" beginTimestamp="2018-06-12T11:15:30UTC" endTimestamp="2018-06-12T11:15:30UTC" version="0.3_2017-03-18" hostname="10c7f55a787c" />
+    </linguisticProcessors>
+    <linguisticProcessors layer="constituents">
+      <lp name="Morphosyntactic parser based on Alpino" timestamp="2018-06-12T11:15:30UTC" beginTimestamp="2018-06-12T11:15:30UTC" endTimestamp="2018-06-12T11:15:30UTC" version="0.3_2017-03-18" hostname="10c7f55a787c" />
+    </linguisticProcessors>
+    <linguisticProcessors layer="deps">
+      <lp name="Morphosyntactic parser based on Alpino" timestamp="2018-06-12T11:15:30UTC" beginTimestamp="2018-06-12T11:15:30UTC" endTimestamp="2018-06-12T11:15:30UTC" version="0.3_2017-03-18" hostname="10c7f55a787c" />
+    </linguisticProcessors>
+    <linguisticProcessors layer="entities">
+      <lp name="ixa-pipe-nerc-nl-6-class-clusters-sonar" beginTimestamp="2018-06-12T11:15:30+0000" endTimestamp="2018-06-12T11:15:41+0000" version="1.6.1-a86ce72f1de4b1aee18c9b20a89ea88ad9411d7c" hostname="10c7f55a787c" />
+    </linguisticProcessors>
+  </nafHeader>
+  <raw><![CDATA[Piet herkende zichzelf]]></raw>
+  <text>
+    <wf id="w1" offset="0" length="4" sent="1" para="1">Piet</wf>
+    <wf id="w2" offset="5" length="8" sent="1" para="1">herkende</wf>
+    <wf id="w3" offset="14" length="8" sent="1" para="1">zichzelf</wf>
+  </text>
+  <terms>
+    <!--Piet-->
+    <term id="t_0" type="open" lemma="Piet" pos="name" morphofeat="N(eigen,ev,basis,zijd,stan)">
+      <span>
+        <target id="w1" />
+      </span>
+    </term>
+    <!--herkende-->
+    <term id="t_1" type="open" lemma="herkennen" pos="verb" morphofeat="WW(pv,verl,ev)">
+      <span>
+        <target id="w2" />
+      </span>
+    </term>
+    <!--zichzelf-->
+    <term id="t_2" type="close" lemma="zichzelf" pos="pron" morphofeat="VNW(refl,pron,obl,nadr,3,getal)">
+      <span>
+        <target id="w3" />
+      </span>
+    </term>
+  </terms>
+  <deps>
+    <!--hd/su(herkende, Piet)-->
+    <dep from="t_1" to="t_0" rfunc="hd/su" />
+    <!--hd/obj1(herkende, zichzelf)-->
+    <dep from="t_1" to="t_2" rfunc="hd/obj1" />
+  </deps>
+  <entities>
+    <entity id="e1" type="PER">
+      <references>
+        <!--Piet-->
+        <span>
+          <target id="t_0" />
+        </span>
+      </references>
+    </entity>
+  </entities>
+  <constituency>
+    <tree>
+      <!--Non-terminals-->
+      <nt id="nter0" label="top" />
+      <nt id="nter1" label="smain" />
+      <nt id="nter2" label="name" />
+      <nt id="nter3" label="verb" />
+      <nt id="nter4" label="pron" />
+      <!--Terminals-->
+      <!--Piet-->
+      <t id="ter0">
+        <span>
+          <target id="t_0" />
+        </span>
+      </t>
+      <!--herkende-->
+      <t id="ter1">
+        <span>
+          <target id="t_1" />
+        </span>
+      </t>
+      <!--zichzelf-->
+      <t id="ter2">
+        <span>
+          <target id="t_2" />
+        </span>
+      </t>
+      <!--Tree edges-->
+      <edge id="tre0" from="nter1" to="nter0" />
+      <edge id="tre1" from="nter2" to="nter1" />
+      <edge id="tre2" from="ter0" to="nter2" />
+      <edge id="tre3" from="nter3" to="nter1" head="yes" />
+      <edge id="tre4" from="ter1" to="nter3" />
+      <edge id="tre5" from="nter4" to="nter1" />
+      <edge id="tre6" from="ter2" to="nter4" />
+    </tree>
+  </constituency>
+</NAF>
