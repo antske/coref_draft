@@ -1,7 +1,7 @@
 import logging
 
-from KafNafParserPy import Cspan, Ctarget, Ccoreference
-
+from KafNafParserPy.span_data import Cspan, Ctarget
+from KafNafParserPy.coreference_data import  Ccoreference
 
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
