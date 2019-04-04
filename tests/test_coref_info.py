@@ -85,6 +85,9 @@ def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
     orig_dic = {k: set(v) for k, v in indic.items()}    # deep copy
     keymap = merge_keys(indic, key_sets)
 
+    # Check whether the orig_dic, key_sets pair makes sense, i.e.
+    # Check whether anything being in a key_set indeed means orig_dic is not
+    # empty
     assert not any(key_sets) or orig_dic
     for key in orig_dic:
         assert key in indic or (key in keymap and keymap[key] in orig_dic)
