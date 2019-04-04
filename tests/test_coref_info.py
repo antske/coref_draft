@@ -70,7 +70,8 @@ def test_merge_keys_fully_random_dicts(indic):
 @given(
     dictionaries(
         text(max_size=MAX_TEXT_SIZE),
-        sets(text(max_size=MAX_TEXT_SIZE))
+        sets(text(max_size=MAX_TEXT_SIZE)),
+        max_size=100
     ),
     integers())
 def test_merge_keys_pointwise_random_dicts(indic, combinations):
