@@ -2,6 +2,7 @@ import sys
 import logging
 import time
 from collections import defaultdict
+from pkg_resources import get_distribution
 
 from KafNafParserPy import KafNafParser, Clp
 
@@ -15,8 +16,6 @@ from .naf_info import (
     identify_direct_quotations,
     get_offset2string_dicts
 )
-
-versionnr='0.11'
 
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
@@ -843,12 +842,10 @@ def process_coreference(
 
 def add_naf_header(nafobj, begintime):
 
-    global versionnr
-
     endtime = time.strftime('%Y-%m-%dT%H:%M:%S%Z')
     lp = Clp(
         name="vua-multisieve-coreference",
-        version=versionnr,
+        version=get_distribution(__name__.split('.')[0]).version,
         btimestamp=begintime,
         etimestamp=endtime)
     nafobj.add_linguistic_processor('coreferences', lp)
