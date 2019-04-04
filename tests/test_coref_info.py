@@ -33,7 +33,10 @@ def ncr(n, r):
 @composite
 def dicts_and_key_sets(draw, *args, **kwargs):
     dic = draw(dictionaries(*args, **kwargs))
-    key_sets = draw(sets(frozensets(sampled_from(sorted(dic)))))
+    if dic:
+        key_sets = draw(sets(frozensets(sampled_from(sorted(dic)))))
+    else:
+        key_sets = set()
     return dic, key_sets
 
 
