@@ -13,6 +13,9 @@
     <linguisticProcessors layer="entities">
       <lp name="ixa-pipe-nerc-nl-6-class-clusters-sonar" beginTimestamp="2018-06-12T11:15:30+0000" endTimestamp="2018-06-12T11:15:41+0000" version="1.6.1-a86ce72f1de4b1aee18c9b20a89ea88ad9411d7c" hostname="10c7f55a787c"/>
     </linguisticProcessors>
+    <linguisticProcessors layer="coreferences">
+      <lp name="vua-multisieve-coreference" version="{version}" timestamp="{timestamp}" beginTimestamp="{beginTimestamp}" endTimestamp="{endTimestamp}" hostname="{hostname}"/>
+    </linguisticProcessors>
   </nafHeader>
   <raw>Piet herkende zichzelf</raw>
   <text>
