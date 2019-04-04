@@ -20,6 +20,8 @@ from multisieve_coreference.coref_info import (
     CoreferenceInformation
 )
 
+MAX_TEXT_SIZE = 30
+
 
 def ncr(n, r):
     if n < r:
@@ -35,13 +37,22 @@ def dicts_and_key_sets(draw, *args, **kwargs):
     return dic, key_sets
 
 
-@given(dictionaries(text(), sets(text())), integers())
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ),
+    integers())
 def test_repr(dic, start_id):
     info = CoreferenceInformation(dic, start_id)
     assert info == eval(repr(info))
 
 
-@given(dictionaries(text(), sets(text())))
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ))
 def test_merge_keys_fully_random_dicts(indic):
     orig_keys = list(indic)
     orig_values = set(it.chain.from_iterable(indic.values()))
@@ -53,7 +64,12 @@ def test_merge_keys_fully_random_dicts(indic):
 
 
 @pytest.mark.slow
-@given(dictionaries(text(), sets(text())), integers())
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ),
+    integers())
 def test_merge_keys_pointwise_random_dicts(indic, combinations):
     if indic:
         combinations %= len(indic)
@@ -79,7 +95,11 @@ def test_merge_keys_pointwise_random_dicts(indic, combinations):
         assert orig_dic[key] <= indic[keymap.get(key, key)]
 
 
-@given(dicts_and_key_sets(text(), sets(text())))
+@given(
+    dicts_and_key_sets(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ))
 def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
     indic, key_sets = dic_and_sets
     orig_dic = {k: set(v) for k, v in indic.items()}    # deep copy
@@ -95,14 +115,25 @@ def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
     event("Final length dictionary: {}".format(len(indic)))
 
 
-@given(dictionaries(text(), sets(text())), sets(frozensets(integers())))
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ),
+    sets(frozensets(integers())))
 def test_merge_keys_bad_keys(indic, bad_keys):
     assume(any(bad_keys))
     with pytest.raises(KeyError):
         merge_keys(indic, bad_keys)
 
 
-@given(dictionaries(text(), sets(text())), lists(lists(text())), randoms())
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ),
+    lists(lists(text(max_size=MAX_TEXT_SIZE))),
+    randoms())
 def test_add_coref_class(indic, content, random):
     info = CoreferenceInformation(indic)
     for mentions in content:
