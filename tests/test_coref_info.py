@@ -2,7 +2,7 @@ from math import factorial
 import itertools as it
 
 import pytest
-from hypothesis import given, assume, note, event
+from hypothesis import given, assume, note, event, settings
 from hypothesis.strategies import (
     dictionaries,
     text,
@@ -74,6 +74,7 @@ def test_merge_keys_fully_random_dicts(indic):
         max_size=100
     ),
     integers())
+@settings(deadline=None)
 def test_merge_keys_pointwise_random_dicts(indic, combinations):
     if indic:
         combinations %= len(indic)
@@ -124,7 +125,7 @@ def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
         text(max_size=MAX_TEXT_SIZE),
         sets(text(max_size=MAX_TEXT_SIZE))
     ),
-    sets(frozensets(integers())))
+    sets(frozensets(integers(), max_size=30)))
 def test_merge_keys_bad_keys(indic, bad_keys):
     assume(any(bad_keys))
     with pytest.raises(KeyError):
