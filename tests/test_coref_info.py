@@ -123,9 +123,9 @@ def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
 @given(
     dictionaries(
         text(max_size=MAX_TEXT_SIZE),
-        sets(text(max_size=MAX_TEXT_SIZE))
+        sets(text(max_size=MAX_TEXT_SIZE), max_size=30),
     ),
-    sets(frozensets(integers(), max_size=30)))
+    sets(frozensets(integers(), max_size=30), max_size=30))
 def test_merge_keys_bad_keys(indic, bad_keys):
     assume(any(bad_keys))
     with pytest.raises(KeyError):
