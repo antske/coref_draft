@@ -3,15 +3,26 @@ import logging
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 
-class ConstituencyTree:
+class ConstituencyTrees:
     """
-    Group together information from a constituency tree and expose convenient
-    lookups.
+    A (bit of a messy) collection of several constituency trees,
+    together with some convenience functions.
+
+    Because NAF-files don't specify what edges are part of which tree,
+    this class doesn't know either.
+
+    This class can't handle it if you change `head2deps` and/or `dep2heads`
+    after initialisation.
+
+    !! NB !! Alpino does **not** output strict trees. This means we cannot even
+             assume we're working with a graph that is a set of disjoint trees,
+             but have to accept the fact we have to be able to handle every
+             kind of graph.
     """
 
     def __init__(self, head2deps):
         """
-        Initialise `ConstituencyTree`
+        Initialise `ConstituencyTrees`
         """
         self.head2deps = head2deps
 
@@ -34,7 +45,7 @@ class ConstituencyTree:
     def from_naf(cls, nafobj, term_filter=None,
                  filter_direct_self_reference=True):
         """
-        Initialise this ConstituencyTree from a NAF object
+        Initialise this ConstituencyTrees from a NAF object
 
         Only keep terms where `term_filter(naf, term)` evaluates True.
 
@@ -186,9 +197,9 @@ class ConstituencyTree:
 
             from  --child info-->  to
 
-        !! NB !! If a circular reference exists in the dependency tree, this
-                 will stay in, even if some of the terms in the circular
-                 reference are filtered out.
+        !! NB !! If a circular reference exists in one of the "trees", this
+                 will stay in, even if some (or all but one) of the terms in
+                 the circular reference are filtered out.
 
         :param head2deps:       {head: {(dep, function), ...}}
         :param term_filter:     filter for terms

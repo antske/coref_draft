@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from multisieve_coreference.constituency_tree import ConstituencyTree
+from multisieve_coreference.constituency_tree import ConstituencyTrees
 
 
 @pytest.fixture
@@ -9,7 +9,7 @@ def example_constituency_tree(example_naf_object):
     # <dep from="t_1" to="t_0" rfunc="hd/su" />
     # <!--hd/obj1(herkende, zichzelf)-->
     # <dep from="t_1" to="t_2" rfunc="hd/obj1" />
-    return ConstituencyTree.from_naf(example_naf_object)
+    return ConstituencyTrees.from_naf(example_naf_object)
 
 
 @pytest.fixture
@@ -17,22 +17,22 @@ def sonar_constituency_tree1(sonar_naf_object1):
     # <dep from="t_1" to="t_0" rfunc="hd/su" />
     # <!--hd/obj1(herkende, zichzelf)-->
     # <dep from="t_1" to="t_2" rfunc="hd/obj1" />
-    return ConstituencyTree.from_naf(sonar_naf_object1)
+    return ConstituencyTrees.from_naf(sonar_naf_object1)
 
 
 @pytest.fixture
 def sonar_constituency_tree2(sonar_naf_object2):
-    return ConstituencyTree.from_naf(sonar_naf_object2)
+    return ConstituencyTrees.from_naf(sonar_naf_object2)
 
 
 @pytest.fixture
 def sonar_constituency_tree3(sonar_naf_object3):
-    return ConstituencyTree.from_naf(sonar_naf_object3)
+    return ConstituencyTrees.from_naf(sonar_naf_object3)
 
 
 @pytest.fixture
 def deep_tree():
-    return ConstituencyTree({
+    return ConstituencyTrees({
         't_1016': {('t_1017', 'hd/mod')},
         't_1017': {('t_1019', 'hd/obj1')},
         't_1019': {('t_1018', 'hd/mod')}
@@ -97,7 +97,7 @@ def not_a_tree():
     # <dep from="t_2084" to="t_2082" rfunc="-- / --" />
     # <!--- / -(.., :)-->
     # <dep from="t_2084" to="t_2083" rfunc="-- / --" />
-    return ConstituencyTree({
+    return ConstituencyTrees({
         't_2081': {
             ('t_2082', '-- / --'),
             ('t_2083', '-- / --'),
@@ -123,7 +123,7 @@ def not_a_tree():
 
 @pytest.fixture(params=[10, 100, 1000, 10000])
 def very_deep_tree(request):
-    return ConstituencyTree({
+    return ConstituencyTrees({
         i: {(i + 1, None)} for i in range(request.param)
     })
 
@@ -237,7 +237,7 @@ def test_filter_all_but_two_nodes(very_deep_tree, caplog):
     head2deps = very_deep_tree.head2deps
     root = min(head2deps)
     leaf = max(head2deps) + 1
-    assert ConstituencyTree.filter_headdep_dict(
+    assert ConstituencyTrees.filter_headdep_dict(
         head2deps,
         lambda t: t == root or t == leaf
     ) == {root: {(leaf, None)}}
@@ -265,7 +265,7 @@ def test_filter_not_a_tree(not_a_tree):
             raise AssertionError("This code is in an infinite loop!")
         return head == 't_2082'
 
-    assert ConstituencyTree.filter_headdep_dict(
+    assert ConstituencyTrees.filter_headdep_dict(
         not_a_tree.head2deps,
         my_filter
     ) == {'t_2082': {('t_2082', '-- / --')}}
@@ -273,18 +273,18 @@ def test_filter_not_a_tree(not_a_tree):
 
 def test_filter_direct_self_reference_interesting(not_a_tree):
     for key in not_a_tree.head2deps:
-        possibly_self_referent = ConstituencyTree.filter_headdep_dict(
+        possibly_self_referent = ConstituencyTrees.filter_headdep_dict(
             not_a_tree.head2deps,
             lambda t: t == key
         )
         assert len(
-            ConstituencyTree.filter_direct_self_reference(
+            ConstituencyTrees.filter_direct_self_reference(
                 possibly_self_referent
             )
         ) == 0
 
 
 def test_filter_direct_self_reference_twice(any_tree):
-    filtered = ConstituencyTree.filter_direct_self_reference(
+    filtered = ConstituencyTrees.filter_direct_self_reference(
         any_tree.head2deps)
-    assert filtered == ConstituencyTree.filter_direct_self_reference(filtered)
+    assert filtered == ConstituencyTrees.filter_direct_self_reference(filtered)
