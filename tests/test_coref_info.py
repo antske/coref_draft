@@ -2,7 +2,7 @@ from math import factorial
 import itertools as it
 
 import pytest
-from hypothesis import given, assume, note, event, settings
+from hypothesis import given, assume, note, event, settings, HealthCheck
 from hypothesis.strategies import (
     dictionaries,
     text,
@@ -123,9 +123,10 @@ def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
 @given(
     dictionaries(
         text(max_size=MAX_TEXT_SIZE),
-        sets(text(max_size=MAX_TEXT_SIZE), max_size=30),
+        sets(text(max_size=MAX_TEXT_SIZE)),
     ),
-    sets(frozensets(integers(), max_size=30), max_size=30))
+    sets(frozensets(integers())))
+@settings(suppress_health_check=[HealthCheck.too_slow])
 def test_merge_keys_bad_keys(indic, bad_keys):
     assume(any(bad_keys))
     with pytest.raises(KeyError):
@@ -135,10 +136,11 @@ def test_merge_keys_bad_keys(indic, bad_keys):
 @given(
     dictionaries(
         text(max_size=MAX_TEXT_SIZE),
-        sets(text(max_size=MAX_TEXT_SIZE), max_size=30)
+        sets(text(max_size=MAX_TEXT_SIZE))
     ),
-    lists(lists(text(max_size=MAX_TEXT_SIZE), max_size=30)),
+    lists(lists(text(max_size=MAX_TEXT_SIZE))),
     randoms())
+@settings(suppress_health_check=[HealthCheck.too_slow])
 def test_add_coref_class(indic, content, random):
     info = CoreferenceInformation(indic)
     for mentions in content:
