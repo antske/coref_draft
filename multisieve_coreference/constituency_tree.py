@@ -38,7 +38,9 @@ class ConstituencyTree:
         Only keep terms where `term_filter(term)` evaluates True.
 
         :param nafobj:          NAF object from input
+        :type  nafobj:          KafNafParser
         :param term_filter:     filter for terms
+        :type  term_filter:     Callable[[KafNafParser, str], bool]
         """
         unfiltered = cls.create_headdep_dict(nafobj)
         return cls(cls.filter_headdep_dict(
