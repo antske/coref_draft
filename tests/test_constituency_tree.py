@@ -13,11 +13,21 @@ def example_constituency_tree(example_naf_object):
 
 
 @pytest.fixture
-def sonar_constituency_tree(sonar_naf_object1):
+def sonar_constituency_tree1(sonar_naf_object1):
     # <dep from="t_1" to="t_0" rfunc="hd/su" />
     # <!--hd/obj1(herkende, zichzelf)-->
     # <dep from="t_1" to="t_2" rfunc="hd/obj1" />
     return ConstituencyTree.from_naf(sonar_naf_object1)
+
+
+@pytest.fixture
+def sonar_constituency_tree2(sonar_naf_object2):
+    return ConstituencyTree.from_naf(sonar_naf_object2)
+
+
+@pytest.fixture
+def sonar_constituency_tree3(sonar_naf_object3):
+    return ConstituencyTree.from_naf(sonar_naf_object3)
 
 
 @pytest.fixture
@@ -120,7 +130,9 @@ def very_deep_tree(request):
 
 @pytest.fixture(params=[
     'example_constituency_tree',
-    'sonar_constituency_tree',
+    'sonar_constituency_tree1',
+    'sonar_constituency_tree2',
+    'sonar_constituency_tree3',
     'deep_tree',
     'not_a_tree',
 ])
