@@ -81,7 +81,7 @@ class ConstituencyTree:
         """
         Get the term IDs of the terms dependent on `ID`.
 
-        Always contains `ID`, even if it is an unknown `ID`.
+        Always contains `ID`, even if it is unknown.
 
         :param headID:  term ID to get constituent of
         :return:        a set of IDs of terms that are dependents of `ID`
