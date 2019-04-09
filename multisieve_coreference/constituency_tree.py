@@ -28,7 +28,7 @@ class ConstituencyTree:
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.head2deps == other.head2deps
-        return False
+        return NotImplemented
 
     @classmethod
     def from_naf(cls, nafobj, term_filter=lambda naf, t: True):
