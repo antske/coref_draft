@@ -48,31 +48,6 @@ def not_a_tree():
     # <wf id="w2084" offset="11966" length="1" sent="124" para="1">:</wf>
     # <wf id="w2085" offset="11968" length="2" sent="124" para="1">..</wf>
 
-    # <term id="t_2081" type="open" lemma="-" pos="punct" morphofeat="LET()">
-    #   <span>
-    #     <target id="w2082" />
-    #   </span>
-    # </term>
-    # <!--Signalementen-->
-    # <term id="t_2082" type="open" lemma="signalement" pos="noun"
-    #      morphofeat="N(soort,mv,basis)">
-    #   <span>
-    #     <target id="w2083" />
-    #   </span>
-    # </term>
-    # <!--:-->
-    # <term id="t_2083" type="open" lemma=":" pos="punct" morphofeat="LET()">
-    #   <span>
-    #     <target id="w2084" />
-    #   </span>
-    # </term>
-    # <!--..-->
-    # <term id="t_2084" type="open" lemma=".." pos="punct" morphofeat="LET()">
-    #   <span>
-    #     <target id="w2085" />
-    #   </span>
-    # </term>
-
     # <!--- / -( - , Signalementen)-->
     # <dep from="t_2081" to="t_2082" rfunc="-- / --" />
     # <!--- / -( - , :)-->
