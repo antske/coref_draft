@@ -135,9 +135,9 @@ def test_merge_keys_bad_keys(indic, bad_keys):
 @given(
     dictionaries(
         text(max_size=MAX_TEXT_SIZE),
-        sets(text(max_size=MAX_TEXT_SIZE))
+        sets(text(max_size=MAX_TEXT_SIZE), max_size=30)
     ),
-    lists(lists(text(max_size=MAX_TEXT_SIZE))),
+    lists(lists(text(max_size=MAX_TEXT_SIZE), max_size=30)),
     randoms())
 def test_add_coref_class(indic, content, random):
     info = CoreferenceInformation(indic)
