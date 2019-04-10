@@ -82,6 +82,33 @@ class ConstituencyTrees:
                 dep2heads.setdefault(toID, set()).add((headID, relation))
         return dep2heads
 
+    def get_roots(self, ignore_non_trees=False):
+        """
+        Get the roots of this collection of "trees".
+
+        The roots are all heads that aren't a dependent.
+
+        Because of circular references, this could be non-existent for some of
+        the "trees". In those cases an error will be raised, except if
+        `ignore_non_trees` is falsey: then the check is skipped entirely.
+        """
+        roots = set(self.head2deps) - set(self.dep2heads)
+
+        # Check for missing roots
+        # If none are missing, removing all heads that are dependent of it
+        # (including themselves) should leave nothing.
+        if not ignore_non_trees:
+            something_left = set(self.head2deps).difference(
+                *map(self.get_constituent, roots)
+            )
+            if something_left:
+                raise ValueError(
+                    "Circular reference detected. Missing graph: {}".format(
+                        {key: self.head2deps[key] for key in something_left}
+                    )
+                )
+        return roots
+
     def get_direct_dependents(self, ID):
         """
         Get the term IDs of the terms directly dependent on `ID`.

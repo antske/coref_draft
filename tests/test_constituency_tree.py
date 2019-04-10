@@ -201,6 +201,7 @@ def test_example_constituency_tree(example_constituency_tree):
     assert example_constituency_tree.get_constituent('t_2') == {'t_2'}
     assert example_constituency_tree.get_constituent('very random') == \
         {'very random'}
+    assert example_constituency_tree.get_roots() == {'t_1'}
 
 
 def test_deep_get_constituent(deep_tree, caplog):
@@ -329,3 +330,12 @@ def test_filter_direct_self_reference_twice(any_tree):
     filtered = ConstituencyTrees.filter_direct_self_reference(
         any_tree.head2deps)
     assert filtered == ConstituencyTrees.filter_direct_self_reference(filtered)
+
+
+def test_get_roots(definitely_a_tree):
+    assert definitely_a_tree.get_roots() <= set(definitely_a_tree.head2deps)
+
+
+def test_get_roots_not_a_tree(not_a_tree):
+    with pytest.raises(ValueError):
+        not_a_tree.get_roots()
