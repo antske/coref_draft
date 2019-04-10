@@ -36,6 +36,7 @@ def example_naf_object(example_naf_file):
 # SoNaR files that caused problems before
 @pytest.fixture
 def sonar_naf_file1(resources_dir):
+    """This file contains a circular reference of size 2"""
     return os.path.join(resources_dir, 'SoNaR-dpc-bal-001236-nl-sen-in.naf')
 
 
@@ -59,7 +60,8 @@ def sonar_naf_object2(sonar_naf_file2):
 @pytest.fixture
 def sonar_naf_file3(resources_dir):
     """
-    This file has a circular reference in it.
+    This file contains a fully-connected sub-graph of size 4.
+    (ELI5: very complicated circular reference.)
     """
     return os.path.join(resources_dir, 'SoNaR-WR-P-E-C-0000000021-in.naf')
 

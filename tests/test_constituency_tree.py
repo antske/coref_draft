@@ -40,8 +40,9 @@ def deep_tree():
 
 
 @pytest.fixture
-def not_a_tree():
+def small_not_a_tree():
     # From WR-P-E-C-0000000021.naf
+    # i.e. sonar_naf_file3
     # <wf id="w2082" offset="11950" length="1" sent="124" para="1">-</wf>
     # <wf id="w2083" offset="11952" length="13" sent="124" para="1">
     #     Signalementen</wf>
@@ -96,6 +97,43 @@ def not_a_tree():
     })
 
 
+@pytest.fixture
+def another_not_a_tree():
+    # From SoNaR-dpc-bal-001236-nl-sen-in.naf
+    # i.e. sonar_naf_file1
+
+    # <!--whd/body(Waar, staan)-->
+    # <dep from="t_2009" to="t_2010" rfunc="whd/body" />
+    # <!--hd/ld(staan, Waar)-->
+    # <dep from="t_2010" to="t_2009" rfunc="hd/ld" />
+    # <!--hd/su(staan, eilanden)-->
+    # <dep from="t_2010" to="t_2012" rfunc="hd/su" />
+    # <!--hd/det(eilanden, de)-->
+    # <dep from="t_2012" to="t_2011" rfunc="hd/det" />
+    # <!--hd/mod(eilanden, in)-->
+    # <dep from="t_2012" to="t_2013" rfunc="hd/mod" />
+    # <!--hd/obj1(in, 2030)-->
+    # <dep from="t_2013" to="t_2014" rfunc="hd/obj1" />
+    # <!--- / -(Waar, ?)-->
+    # <dep from="t_2009" to="t_2015" rfunc="-- / --" />
+
+    return ConstituencyTrees({
+        "t_2009": {
+            ("t_2010", "whd/body"),
+            ("t_2015", "-- / --"),
+        },
+        "t_2010": {
+            ("t_2009", "hd/ld"),
+            ("t_2012", "hd/su"),
+        },
+        "t_2012": {
+            ("t_2011", "hd/det"),
+            ("t_2013", "hd/mod"),
+        },
+        "t_2013": {("t_2014", "hd/obj1")},
+    })
+
+
 @pytest.fixture(params=[10, 100, 1000, 10000])
 def very_deep_tree(request):
     return ConstituencyTrees({
@@ -105,17 +143,45 @@ def very_deep_tree(request):
 
 @pytest.fixture(params=[
     'example_constituency_tree',
-    'sonar_constituency_tree1',
     'sonar_constituency_tree2',
-    'sonar_constituency_tree3',
     'deep_tree',
-    'not_a_tree',
+    # 'very_deep_tree',
+])
+def definitely_a_tree(request):
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture(params=[
+    'sonar_constituency_tree1',
+    'sonar_constituency_tree3',
+    'small_not_a_tree',
+    'another_not_a_tree',
+])
+def not_a_tree(request):
+    return request.getfixturevalue(request.param)
+
+
+# Somehow, this doesn't work hierarchicly
+# @pytest.fixture(params=[
+#     'definitely_a_tree',
+#     'not_a_tree',
+# ])
+@pytest.fixture(params=[
+    # Trees
+    'example_constituency_tree',
+    'sonar_constituency_tree2',
+    'deep_tree',
+    # Not trees
+    'sonar_constituency_tree1',
+    'sonar_constituency_tree3',
+    'small_not_a_tree',
+    'another_not_a_tree',
 ])
 def any_tree(request):
     return request.getfixturevalue(request.param)
 
 
-def test_no_filter(example_constituency_tree):
+def test_example_constituency_tree(example_constituency_tree):
     assert example_constituency_tree.head2deps == {
         't_1': {
             ('t_0', 'hd/su'),
@@ -228,7 +294,7 @@ def test_direct_dependents(example_constituency_tree):
     }
 
 
-def test_filter_not_a_tree(not_a_tree):
+def test_filter_small_not_a_tree(small_not_a_tree):
     global cycle_count
     cycle_count = 0
 
@@ -241,7 +307,7 @@ def test_filter_not_a_tree(not_a_tree):
         return head == 't_2082'
 
     assert ConstituencyTrees.filter_headdep_dict(
-        not_a_tree.head2deps,
+        small_not_a_tree.head2deps,
         my_filter
     ) == {'t_2082': {('t_2082', '-- / --')}}
 
