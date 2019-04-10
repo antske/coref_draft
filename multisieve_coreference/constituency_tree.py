@@ -31,22 +31,30 @@ class ConstituencyTree:
         return NotImplemented
 
     @classmethod
-    def from_naf(cls, nafobj, term_filter=lambda naf, t: True):
+    def from_naf(cls, nafobj, term_filter=lambda naf, t: True,
+                 filter_direct_self_reference=True):
         """
         Initialise this ConstituencyTree from a NAF object
 
         Only keep terms where `term_filter(term)` evaluates True.
 
+
         :param nafobj:          NAF object from input
         :type  nafobj:          KafNafParser
+
         :param term_filter:     filter for terms
         :type  term_filter:     Callable[[KafNafParser, str], bool]
+
+        :param filter_direct_self_reference:
+            whether to call `self.filter_direct_self_reference` on the result
         """
-        unfiltered = cls.create_headdep_dict(nafobj)
-        return cls(cls.filter_headdep_dict(
-            unfiltered,
+        filtered = cls.filter_headdep_dict(
+            cls.create_headdep_dict(nafobj),
             lambda t: term_filter(nafobj, t)
-        ))
+        )
+        if filter_direct_self_reference:
+            filtered = cls.filter_direct_self_reference(filtered)
+        return cls(filtered)
 
     @staticmethod
     def reverse_headdep_dict(head2deps):
@@ -137,6 +145,28 @@ class ConstituencyTree:
                 (dep.get_to(), dep.get_function())
             )
         return head2deps
+
+    @staticmethod
+    def filter_direct_self_reference(head2deps):
+        """
+        Filter out any dependents that are the same as their direct parent.
+
+        If this means a head does not have any remaining dependents, the head
+        is also removed.
+        """
+        incomplete = {
+            head: {
+                (dep, info)
+                for dep, info in deps
+                if dep != head
+            }
+            for head, deps in head2deps.items()
+        }
+        # We can't use `incomplete` for iteration, as its size will change
+        for head in head2deps:
+            if not incomplete[head]:
+                del incomplete[head]
+        return incomplete
 
     @staticmethod
     def filter_headdep_dict(head2deps, term_filter):

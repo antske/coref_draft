@@ -257,3 +257,22 @@ def test_filter_not_a_tree(not_a_tree):
         not_a_tree.head2deps,
         my_filter
     ) == {'t_2082': {('t_2082', '-- / --')}}
+
+
+def test_filter_direct_self_reference_interesting(not_a_tree):
+    for key in not_a_tree.head2deps:
+        possibly_self_referent = ConstituencyTree.filter_headdep_dict(
+            not_a_tree.head2deps,
+            lambda t: t == key
+        )
+        assert len(
+            ConstituencyTree.filter_direct_self_reference(
+                possibly_self_referent
+            )
+        ) == 0
+
+
+def test_filter_direct_self_reference_twice(any_tree):
+    filtered = ConstituencyTree.filter_direct_self_reference(
+        any_tree.head2deps)
+    assert filtered == ConstituencyTree.filter_direct_self_reference(filtered)
