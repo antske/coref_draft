@@ -43,7 +43,7 @@ class ConstituencyTrees:
 
     @classmethod
     def from_naf(cls, nafobj, term_filter=None,
-                 filter_direct_self_reference=True):
+                 filter_direct_self_reference=False):
         """
         Initialise this ConstituencyTrees from a NAF object
 
