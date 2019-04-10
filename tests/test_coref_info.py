@@ -56,6 +56,7 @@ def test_repr(dic, start_id):
         text(max_size=MAX_TEXT_SIZE),
         sets(text(max_size=MAX_TEXT_SIZE))
     ))
+@settings(suppress_health_check=[HealthCheck.too_slow])
 def test_merge_keys_fully_random_dicts(indic):
     orig_keys = list(indic)
     orig_values = set(it.chain.from_iterable(indic.values()))
