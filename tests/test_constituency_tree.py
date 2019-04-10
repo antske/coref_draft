@@ -161,6 +161,26 @@ def not_a_tree(request):
     return request.getfixturevalue(request.param)
 
 
+@pytest.fixture(params=[
+    'sonar_constituency_tree1',
+    # 'sonar_constituency_tree3',
+    # 'small_not_a_tree',
+    'another_not_a_tree',
+])
+def rootable_tree(request):
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture(params=[
+    # 'sonar_constituency_tree1',
+    'sonar_constituency_tree3',
+    'small_not_a_tree',
+    # 'another_not_a_tree',
+])
+def nonrootable_tree(request):
+    return request.getfixturevalue(request.param)
+
+
 # Somehow, this doesn't work hierarchicly
 # @pytest.fixture(params=[
 #     'definitely_a_tree',
@@ -339,3 +359,13 @@ def test_get_roots(definitely_a_tree):
 def test_get_roots_not_a_tree(not_a_tree):
     with pytest.raises(ValueError):
         not_a_tree.get_roots()
+
+
+def test_get_roots_rootable_tree(rootable_tree):
+    assert rootable_tree.get_roots(
+        try_fixing=True) <= set(rootable_tree.head2deps)
+
+
+def test_get_roots_nonrootable_tree(nonrootable_tree):
+    with pytest.raises(ValueError):
+        nonrootable_tree.get_roots(try_fixing=True)

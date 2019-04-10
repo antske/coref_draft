@@ -82,7 +82,7 @@ class ConstituencyTrees:
                 dep2heads.setdefault(toID, set()).add((headID, relation))
         return dep2heads
 
-    def get_roots(self, ignore_non_trees=False):
+    def get_roots(self, ignore_non_trees=False, try_fixing=False):
         """
         Get the roots of this collection of "trees".
 
@@ -91,22 +91,71 @@ class ConstituencyTrees:
         Because of circular references, this could be non-existent for some of
         the "trees". In those cases an error will be raised, except if
         `ignore_non_trees` is falsey: then the check is skipped entirely.
+
+        if `try_fixing` is truthy, an ugly hack will try to find the "real"
+        roots by finding things that point using '-- / --': the relation Alpino
+        uses to point to punctuation.
         """
         roots = set(self.head2deps) - set(self.dep2heads)
 
         # Check for missing roots
         # If none are missing, removing all heads that are dependent of it
         # (including themselves) should leave nothing.
-        if not ignore_non_trees:
+        if not ignore_non_trees or try_fixing:
             something_left = set(self.head2deps).difference(
                 *map(self.get_constituent, roots)
             )
             if something_left:
-                raise ValueError(
-                    "Circular reference detected. Missing graph: {}".format(
-                        {key: self.head2deps[key] for key in something_left}
+                problems = {key: self.head2deps[key] for key in something_left}
+                if not try_fixing:  # This now implies `not ignore_non_trees`
+                    raise ValueError(
+                        "Circular reference detected."
+                        " Missing graph: {}".format(problems)
                     )
-                )
+
+                # Try finding roots by finding the things that point using
+                # '-- / --'
+                punct_rel = '-- / --'
+                additional_roots = {
+                    tID
+                    for tID in something_left
+                    if punct_rel in map(lambda p: p[1], self.head2deps[tID])
+                }
+
+                # Verify we don't have too many
+                for r in additional_roots:
+                    # If some additional root dominates some other additional
+                    # root, this is a problem, as every connected graph can
+                    # have at most one root.
+                    dominated = self.get_constituent(r) & additional_roots
+                    dominated.remove(r)  # we know `r` must be in there
+                    if dominated:
+                        raise ValueError(
+                            "Found too many additional roots."
+                            " {} dominates {} in {}".format(
+                                r,
+                                dominated,
+                                problems
+                            )
+                        )
+
+                roots |= additional_roots
+
+                # Verify we have everything
+                if not ignore_non_trees:
+                    something_left = set(self.head2deps).difference(
+                        *map(self.get_constituent, roots)
+                    )
+                    if something_left:
+                        problems = {
+                            key: self.head2deps[key]
+                            for key in something_left
+                        }
+                        raise ValueError(
+                            "Circular reference detected after trying to fix."
+                            " Missing graph: {}".format(problems)
+                        )
+
         return roots
 
     def get_direct_dependents(self, ID):
