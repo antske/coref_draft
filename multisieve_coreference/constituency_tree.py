@@ -31,12 +31,12 @@ class ConstituencyTree:
         return NotImplemented
 
     @classmethod
-    def from_naf(cls, nafobj, term_filter=lambda naf, t: True,
+    def from_naf(cls, nafobj, term_filter=None,
                  filter_direct_self_reference=True):
         """
         Initialise this ConstituencyTree from a NAF object
 
-        Only keep terms where `term_filter(term)` evaluates True.
+        Only keep terms where `term_filter(naf, term)` evaluates True.
 
 
         :param nafobj:          NAF object from input
@@ -48,6 +48,10 @@ class ConstituencyTree:
         :param filter_direct_self_reference:
             whether to call `self.filter_direct_self_reference` on the result
         """
+        if term_filter is None:
+            def term_filter(naf, t):
+                return True
+
         filtered = cls.filter_headdep_dict(
             cls.create_headdep_dict(nafobj),
             lambda t: term_filter(nafobj, t)
