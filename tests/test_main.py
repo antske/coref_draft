@@ -1,47 +1,11 @@
-import sys
-import subprocess
-
 import pytest
-
-from KafNafParserPy import KafNafParser
+from run_and_compare import run_and_compare
 
 from multisieve_coreference.resolve_coreference import process_coreference
 
 
 def test_main_example(example_naf_file, temp_file, example_naf_output):
-    with open(example_naf_file) as fd, open(temp_file, 'w') as out:
-        subprocess.check_call(
-            [sys.executable, '-m', 'multisieve_coreference'],
-            stdin=fd,
-            stdout=out
-        )
-
-    with open(temp_file) as out, open(example_naf_output) as correct:
-        # Check something happened and that the result can be parsed
-        outnaf = KafNafParser(temp_file)
-        assert outnaf.coreference_layer is not None
-
-        # Get the header information to be able to compare raw files
-        our_header_layer = list(
-            outnaf.get_linguisticProcessors()
-        )[-1]
-        assert our_header_layer.get_layer() == 'coreferences'
-
-        processors = list(
-            our_header_layer.get_linguistic_processors()
-        )
-        assert len(processors) == 1
-
-        our_header_data = processors[0]
-
-        correct = correct.read().format(
-            version=our_header_data.get_version(),
-            timestamp=our_header_data.get_timestamp(),
-            beginTimestamp=our_header_data.get_beginTimestamp(),
-            endTimestamp=our_header_data.get_endTimestamp(),
-            hostname=our_header_data.get_hostname(),
-        )
-        assert out.read() == correct
+    run_and_compare(example_naf_file, temp_file, example_naf_output)
 
 
 def test_example_without_fill(example_naf_object, caplog):

@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NAF xml:lang="nl" version="3.0">
+  <nafHeader>
+    <linguisticProcessors layer="terms">
+      <lp name="Morphosyntactic parser based on Alpino" timestamp="2019-04-15T12:42:14UTC" beginTimestamp="2019-04-15T12:42:14UTC" endTimestamp="2019-04-15T12:42:14UTC" version="0.3_2017-03-18" hostname="a58e7f38f835" />
+    </linguisticProcessors>
+    <linguisticProcessors layer="constituents">
+      <lp name="Morphosyntactic parser based on Alpino" timestamp="2019-04-15T12:42:14UTC" beginTimestamp="2019-04-15T12:42:14UTC" endTimestamp="2019-04-15T12:42:14UTC" version="0.3_2017-03-18" hostname="a58e7f38f835" />
+    </linguisticProcessors>
+    <linguisticProcessors layer="deps">
+      <lp name="Morphosyntactic parser based on Alpino" timestamp="2019-04-15T12:42:14UTC" beginTimestamp="2019-04-15T12:42:14UTC" endTimestamp="2019-04-15T12:42:14UTC" version="0.3_2017-03-18" hostname="a58e7f38f835" />
+    </linguisticProcessors>
+    <linguisticProcessors layer="entities">
+      <lp name="ixa-pipe-nerc-nl-6-class-clusters-sonar" beginTimestamp="2019-04-15T12:42:14+0000" endTimestamp="2019-04-15T12:42:20+0000" version="1.5.4-ca02c931bc0b200ccdb8b5795a7552e4cc0d4802" hostname="a58e7f38f835" />
+    </linguisticProcessors>
+  </nafHeader>
+  <raw><![CDATA[Wie zal je neus dan snuiten, wanneer je oren tuiten?]]></raw>
+  <text>
+    <wf id="w1" offset="0" length="3" sent="1" para="1">Wie</wf>
+    <wf id="w2" offset="4" length="3" sent="1" para="1">zal</wf>
+    <wf id="w3" offset="8" length="2" sent="1" para="1">je</wf>
+    <wf id="w4" offset="11" length="4" sent="1" para="1">neus</wf>
+    <wf id="w5" offset="16" length="3" sent="1" para="1">dan</wf>
+    <wf id="w6" offset="20" length="7" sent="1" para="1">snuiten</wf>
+    <wf id="w7" offset="28" length="1" sent="1" para="1">,</wf>
+    <wf id="w8" offset="30" length="7" sent="1" para="1">wanneer</wf>
+    <wf id="w9" offset="38" length="2" sent="1" para="1">je</wf>
+    <wf id="w10" offset="41" length="4" sent="1" para="1">oren</wf>
+    <wf id="w11" offset="46" length="6" sent="1" para="1">tuiten</wf>
+    <wf id="w12" offset="53" length="1" sent="1" para="1">?</wf>
+  </text>
+  <terms>
+    <!--Wie-->
+    <term id="t_0" type="close" lemma="wie" pos="pron" morphofeat="VNW(vb,pron,stan,vol,3p,getal)">
+      <span>
+        <target id="w1" />
+      </span>
+    </term>
+    <!--zal-->
+    <term id="t_1" type="open" lemma="zullen" pos="verb" morphofeat="WW(pv,tgw,ev)">
+      <span>
+        <target id="w2" />
+      </span>
+    </term>
+    <!--je-->
+    <term id="t_2" type="close" lemma="je" pos="det" morphofeat="VNW(bez,det,stan,red,2v,ev,prenom,zonder,agr)">
+      <span>
+        <target id="w3" />
+      </span>
+    </term>
+    <!--neus-->
+    <term id="t_3" type="open" lemma="neus" pos="noun" morphofeat="N(soort,ev,basis,zijd,stan)">
+      <span>
+        <target id="w4" />
+      </span>
+    </term>
+    <!--dan-->
+    <term id="t_4" type="open" lemma="dan" pos="adv" morphofeat="BW()">
+      <span>
+        <target id="w5" />
+      </span>
+    </term>
+    <!--snuiten-->
+    <term id="t_5" type="open" lemma="snuiten" pos="verb" morphofeat="WW(inf,vrij,zonder)">
+      <span>
+        <target id="w6" />
+      </span>
+    </term>
+    <!--,-->
+    <term id="t_6" type="open" lemma="," pos="punct" morphofeat="LET()">
+      <span>
+        <target id="w7" />
+      </span>
+    </term>
+    <!--wanneer-->
+    <term id="t_7" type="open" lemma="wanneer" pos="comp" morphofeat="VG(onder)">
+      <span>
+        <target id="w8" />
+      </span>
+    </term>
+    <!--je-->
+    <term id="t_8" type="close" lemma="je" pos="det" morphofeat="VNW(bez,det,stan,red,2v,ev,prenom,zonder,agr)">
+      <span>
+        <target id="w9" />
+      </span>
+    </term>
+    <!--oren-->
+    <term id="t_9" type="open" lemma="oor" pos="noun" morphofeat="N(soort,mv,basis)">
+      <span>
+        <target id="w10" />
+      </span>
+    </term>
+    <!--tuiten-->
+    <term id="t_10" type="open" lemma="tuiten" pos="verb" morphofeat="WW(pv,tgw,mv)">
+      <span>
+        <target id="w11" />
+      </span>
+    </term>
+    <!--?-->
+    <term id="t_11" type="open" lemma="?" pos="punct" morphofeat="LET()">
+      <span>
+        <target id="w12" />
+      </span>
+    </term>
+  </terms>
+  <deps>
+    <!--whd/body(Wie, zal)-->
+    <dep from="t_0" to="t_1" rfunc="whd/body" />
+    <!--hd/su(zal, Wie)-->
+    <dep from="t_1" to="t_0" rfunc="hd/su" />
+    <!--hd/vc(zal, snuiten)-->
+    <dep from="t_1" to="t_5" rfunc="hd/vc" />
+    <!--hd/su(snuiten, Wie)-->
+    <dep from="t_5" to="t_0" rfunc="hd/su" />
+    <!--hd/obj1(snuiten, neus)-->
+    <dep from="t_5" to="t_3" rfunc="hd/obj1" />
+    <!--hd/det(neus, je)-->
+    <dep from="t_3" to="t_2" rfunc="hd/det" />
+    <!--hd/mod(snuiten, dan)-->
+    <dep from="t_5" to="t_4" rfunc="hd/mod" />
+    <!--hd/mod(snuiten, wanneer)-->
+    <dep from="t_5" to="t_7" rfunc="hd/mod" />
+    <!--cmp/body(wanneer, tuiten)-->
+    <dep from="t_7" to="t_10" rfunc="cmp/body" />
+    <!--hd/su(tuiten, oren)-->
+    <dep from="t_10" to="t_9" rfunc="hd/su" />
+    <!--hd/det(oren, je)-->
+    <dep from="t_9" to="t_8" rfunc="hd/det" />
+    <!--- / -(Wie, ,)-->
+    <dep from="t_0" to="t_6" rfunc="-- / --" />
+    <!--- / -(Wie, ?)-->
+    <dep from="t_0" to="t_11" rfunc="-- / --" />
+  </deps>
+  <constituency>
+    <tree>
+      <!--Non-terminals-->
+      <nt id="nter0" label="top" />
+      <nt id="nter1" label="punct" />
+      <nt id="nter2" label="whq" />
+      <nt id="nter3" label="pron" />
+      <nt id="nter4" label="sv1" />
+      <nt id="nter5" label="verb" />
+      <nt id="nter6" label="inf" />
+      <nt id="nter7" label="np" />
+      <nt id="nter8" label="det" />
+      <nt id="nter9" label="noun" />
+      <nt id="nter10" label="adv" />
+      <nt id="nter11" label="verb" />
+      <nt id="nter12" label="cp" />
+      <nt id="nter13" label="comp" />
+      <nt id="nter14" label="ssub" />
+      <nt id="nter15" label="np" />
+      <nt id="nter16" label="det" />
+      <nt id="nter17" label="noun" />
+      <nt id="nter18" label="verb" />
+      <nt id="nter19" label="punct" />
+      <!--Terminals-->
+      <!--,-->
+      <t id="ter0">
+        <span>
+          <target id="t_6" />
+        </span>
+      </t>
+      <!--Wie-->
+      <t id="ter1">
+        <span>
+          <target id="t_0" />
+        </span>
+      </t>
+      <!--zal-->
+      <t id="ter2">
+        <span>
+          <target id="t_1" />
+        </span>
+      </t>
+      <!--je-->
+      <t id="ter3">
+        <span>
+          <target id="t_2" />
+        </span>
+      </t>
+      <!--neus-->
+      <t id="ter4">
+        <span>
+          <target id="t_3" />
+        </span>
+      </t>
+      <!--dan-->
+      <t id="ter5">
+        <span>
+          <target id="t_4" />
+        </span>
+      </t>
+      <!--snuiten-->
+      <t id="ter6">
+        <span>
+          <target id="t_5" />
+        </span>
+      </t>
+      <!--wanneer-->
+      <t id="ter7">
+        <span>
+          <target id="t_7" />
+        </span>
+      </t>
+      <!--je-->
+      <t id="ter8">
+        <span>
+          <target id="t_8" />
+        </span>
+      </t>
+      <!--oren-->
+      <t id="ter9">
+        <span>
+          <target id="t_9" />
+        </span>
+      </t>
+      <!--tuiten-->
+      <t id="ter10">
+        <span>
+          <target id="t_10" />
+        </span>
+      </t>
+      <!--?-->
+      <t id="ter11">
+        <span>
+          <target id="t_11" />
+        </span>
+      </t>
+      <!--Tree edges-->
+      <edge id="tre0" from="nter1" to="nter0" />
+      <edge id="tre1" from="ter0" to="nter1" />
+      <edge id="tre2" from="nter2" to="nter0" />
+      <edge id="tre3" from="nter3" to="nter2" />
+      <edge id="tre4" from="ter1" to="nter3" />
+      <edge id="tre5" from="nter4" to="nter2" />
+      <edge id="tre6" from="nter5" to="nter4" head="yes" />
+      <edge id="tre7" from="ter2" to="nter5" />
+      <edge id="tre8" from="nter6" to="nter4" />
+      <edge id="tre9" from="nter7" to="nter6" />
+      <edge id="tre10" from="nter8" to="nter7" />
+      <edge id="tre11" from="ter3" to="nter8" />
+      <edge id="tre12" from="nter9" to="nter7" head="yes" />
+      <edge id="tre13" from="ter4" to="nter9" />
+      <edge id="tre14" from="nter10" to="nter6" />
+      <edge id="tre15" from="ter5" to="nter10" />
+      <edge id="tre16" from="nter11" to="nter6" head="yes" />
+      <edge id="tre17" from="ter6" to="nter11" />
+      <edge id="tre18" from="nter12" to="nter6" />
+      <edge id="tre19" from="nter13" to="nter12" />
+      <edge id="tre20" from="ter7" to="nter13" />
+      <edge id="tre21" from="nter14" to="nter12" />
+      <edge id="tre22" from="nter15" to="nter14" />
+      <edge id="tre23" from="nter16" to="nter15" />
+      <edge id="tre24" from="ter8" to="nter16" />
+      <edge id="tre25" from="nter17" to="nter15" head="yes" />
+      <edge id="tre26" from="ter9" to="nter17" />
+      <edge id="tre27" from="nter18" to="nter14" head="yes" />
+      <edge id="tre28" from="ter10" to="nter18" />
+      <edge id="tre29" from="nter19" to="nter0" />
+      <edge id="tre30" from="ter11" to="nter19" />
+    </tree>
+  </constituency>
+</NAF>

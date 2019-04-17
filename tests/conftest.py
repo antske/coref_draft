@@ -1,6 +1,8 @@
 import os
 import pytest
 
+pytest.register_assert_rewrite('run_and_compare')
+
 
 @pytest.fixture
 def resources_dir():
