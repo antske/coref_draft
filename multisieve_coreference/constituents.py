@@ -1,6 +1,6 @@
 import logging
 
-from .constituency_tree import ConstituencyTree
+from .constituency_tree import ConstituencyTrees
 
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
@@ -26,6 +26,6 @@ def create_headdep_dicts(
     '''
 
     global tree, head2deps, dep2heads
-    tree = ConstituencyTree.from_naf(nafobj, term_filter)
+    tree = ConstituencyTrees.from_naf(nafobj, term_filter)
     head2deps = tree.head2deps
     dep2heads = tree.dep2heads

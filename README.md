@@ -1,4 +1,4 @@
-coref_draft
+coref_draft [![Build Status](https://travis-ci.org/mpvharmelen/coref_draft.svg?branch=master)](https://travis-ci.org/mpvharmelen/coref_draft)
 =============
 
 Description

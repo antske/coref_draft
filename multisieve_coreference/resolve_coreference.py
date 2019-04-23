@@ -2,6 +2,7 @@ import sys
 import logging
 import time
 from collections import defaultdict
+from pkg_resources import get_distribution
 
 from KafNafParserPy import KafNafParser, Clp
 
@@ -15,8 +16,6 @@ from .naf_info import (
     identify_direct_quotations,
     get_offset2string_dicts
 )
-
-versionnr='0.11'
 
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
@@ -841,14 +840,16 @@ def process_coreference(
     add_coreference_to_naf(nafin, coref_classes, mentions)
 
 
-
 def add_naf_header(nafobj, begintime):
-    
-    global versionnr
-    
+
     endtime = time.strftime('%Y-%m-%dT%H:%M:%S%Z')
-    lp = Clp(name="vua-multisieve-coreference",version=versionnr,btimestamp=begintime,etimestamp=endtime)
+    lp = Clp(
+        name="vua-multisieve-coreference",
+        version=get_distribution(__name__.split('.')[0]).version,
+        btimestamp=begintime,
+        etimestamp=endtime)
     nafobj.add_linguistic_processor('coreferences', lp)
+
 
 def main(argv=None):
     # args and options left for later
@@ -872,14 +873,15 @@ def main(argv=None):
     cmdl_args = vars(parser.parse_args(argv))
     logging.basicConfig(level=cmdl_args.pop('level'))
 
-    
-    #timestamp begintime
+    # timestamp begintime
     begintime = time.strftime('%Y-%m-%dT%H:%M:%S%Z')
+
     logger.info("Reading...")
     nafobj = KafNafParser(sys.stdin)
     logger.info("Processing...")
     process_coreference(nafobj, **cmdl_args)
-    #adding naf header information
+
+    # adding naf header information
     add_naf_header(nafobj, begintime)
     logger.info("Writing...")
     nafobj.dump()

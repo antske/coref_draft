@@ -2,7 +2,7 @@ from math import factorial
 import itertools as it
 
 import pytest
-from hypothesis import given, assume, note, event
+from hypothesis import given, assume, note, event, settings, HealthCheck
 from hypothesis.strategies import (
     dictionaries,
     text,
@@ -20,6 +20,8 @@ from multisieve_coreference.coref_info import (
     CoreferenceInformation
 )
 
+MAX_TEXT_SIZE = 30
+
 
 def ncr(n, r):
     if n < r:
@@ -31,17 +33,30 @@ def ncr(n, r):
 @composite
 def dicts_and_key_sets(draw, *args, **kwargs):
     dic = draw(dictionaries(*args, **kwargs))
-    key_sets = draw(sets(frozensets(sampled_from(sorted(dic)))))
+    if dic:
+        key_sets = draw(sets(frozensets(sampled_from(sorted(dic)))))
+    else:
+        key_sets = set()
     return dic, key_sets
 
 
-@given(dictionaries(text(), sets(text())), integers())
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ),
+    integers())
 def test_repr(dic, start_id):
     info = CoreferenceInformation(dic, start_id)
     assert info == eval(repr(info))
 
 
-@given(dictionaries(text(), sets(text())))
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ))
+@settings(suppress_health_check=[HealthCheck.too_slow])
 def test_merge_keys_fully_random_dicts(indic):
     orig_keys = list(indic)
     orig_values = set(it.chain.from_iterable(indic.values()))
@@ -53,7 +68,14 @@ def test_merge_keys_fully_random_dicts(indic):
 
 
 @pytest.mark.slow
-@given(dictionaries(text(), sets(text())), integers())
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE)),
+        max_size=100
+    ),
+    integers())
+@settings(deadline=None)
 def test_merge_keys_pointwise_random_dicts(indic, combinations):
     if indic:
         combinations %= len(indic)
@@ -79,12 +101,19 @@ def test_merge_keys_pointwise_random_dicts(indic, combinations):
         assert orig_dic[key] <= indic[keymap.get(key, key)]
 
 
-@given(dicts_and_key_sets(text(), sets(text())))
+@given(
+    dicts_and_key_sets(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ))
 def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
     indic, key_sets = dic_and_sets
     orig_dic = {k: set(v) for k, v in indic.items()}    # deep copy
     keymap = merge_keys(indic, key_sets)
 
+    # Check whether the orig_dic, key_sets pair makes sense, i.e.
+    # Check whether anything being in a key_set indeed means orig_dic is not
+    # empty
     assert not any(key_sets) or orig_dic
     for key in orig_dic:
         assert key in indic or (key in keymap and keymap[key] in orig_dic)
@@ -92,14 +121,27 @@ def test_merge_keys_pointwise_selectively_random_dicts(dic_and_sets):
     event("Final length dictionary: {}".format(len(indic)))
 
 
-@given(dictionaries(text(), sets(text())), sets(frozensets(integers())))
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE)),
+    ),
+    sets(frozensets(integers())))
+@settings(suppress_health_check=[HealthCheck.too_slow])
 def test_merge_keys_bad_keys(indic, bad_keys):
     assume(any(bad_keys))
     with pytest.raises(KeyError):
         merge_keys(indic, bad_keys)
 
 
-@given(dictionaries(text(), sets(text())), lists(lists(text())), randoms())
+@given(
+    dictionaries(
+        text(max_size=MAX_TEXT_SIZE),
+        sets(text(max_size=MAX_TEXT_SIZE))
+    ),
+    lists(lists(text(max_size=MAX_TEXT_SIZE))),
+    randoms())
+@settings(suppress_health_check=[HealthCheck.too_slow])
 def test_add_coref_class(indic, content, random):
     info = CoreferenceInformation(indic)
     for mentions in content:

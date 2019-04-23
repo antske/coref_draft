@@ -3,15 +3,26 @@ import logging
 logger = logging.getLogger(None if __name__ == '__main__' else __name__)
 
 
-class ConstituencyTree:
+class ConstituencyTrees:
     """
-    Group together information from a constituency tree and expose convenient
-    lookups.
+    A (bit of a messy) collection of several constituency trees,
+    together with some convenience functions.
+
+    Because NAF-files don't specify what edges are part of which tree,
+    this class doesn't know either.
+
+    This class can't handle it if you change `head2deps` and/or `dep2heads`
+    after initialisation.
+
+    !! NB !! Alpino does **not** output strict trees. This means we cannot even
+             assume we're working with a graph that is a set of disjoint trees,
+             but have to accept the fact we have to be able to handle every
+             kind of graph.
     """
 
     def __init__(self, head2deps):
         """
-        Initialise `ConstituencyTree`
+        Initialise `ConstituencyTrees`
         """
         self.head2deps = head2deps
 
@@ -28,23 +39,37 @@ class ConstituencyTree:
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.head2deps == other.head2deps
-        return False
+        return NotImplemented
 
     @classmethod
-    def from_naf(cls, nafobj, term_filter=lambda naf, t: True):
+    def from_naf(cls, nafobj, term_filter=None,
+                 filter_direct_self_reference=False):
         """
-        Initialise this ConstituencyTree from a NAF object
+        Initialise this ConstituencyTrees from a NAF object
 
-        Only keep terms where `term_filter(term)` evaluates True.
+        Only keep terms where `term_filter(naf, term)` evaluates True.
+
 
         :param nafobj:          NAF object from input
+        :type  nafobj:          KafNafParser
+
         :param term_filter:     filter for terms
+        :type  term_filter:     Callable[[KafNafParser, str], bool]
+
+        :param filter_direct_self_reference:
+            whether to call `self.filter_direct_self_reference` on the result
         """
-        unfiltered = cls.create_headdep_dict(nafobj)
-        return cls(cls.filter_headdep_dict(
-            unfiltered,
+        if term_filter is None:
+            def term_filter(naf, t):
+                return True
+
+        filtered = cls.filter_headdep_dict(
+            cls.create_headdep_dict(nafobj),
             lambda t: term_filter(nafobj, t)
-        ))
+        )
+        if filter_direct_self_reference:
+            filtered = cls.filter_direct_self_reference(filtered)
+        return cls(filtered)
 
     @staticmethod
     def reverse_headdep_dict(head2deps):
@@ -56,6 +81,82 @@ class ConstituencyTree:
             for toID, relation in deps:
                 dep2heads.setdefault(toID, set()).add((headID, relation))
         return dep2heads
+
+    def get_roots(self, ignore_non_trees=False, try_fixing=False):
+        """
+        Get the roots of this collection of "trees".
+
+        The roots are all heads that aren't a dependent.
+
+        Because of circular references, this could be non-existent for some of
+        the "trees". In those cases an error will be raised, except if
+        `ignore_non_trees` is falsey: then the check is skipped entirely.
+
+        if `try_fixing` is truthy, an ugly hack will try to find the "real"
+        roots by finding things that point using '-- / --': the relation Alpino
+        uses to point to punctuation.
+        """
+        roots = set(self.head2deps) - set(self.dep2heads)
+
+        # Check for missing roots
+        # If none are missing, removing all heads that are dependent of it
+        # (including themselves) should leave nothing.
+        if not ignore_non_trees or try_fixing:
+            something_left = set(self.head2deps).difference(
+                *map(self.get_constituent, roots)
+            )
+            if something_left:
+                problems = {key: self.head2deps[key] for key in something_left}
+                if not try_fixing:  # This now implies `not ignore_non_trees`
+                    raise ValueError(
+                        "Circular reference detected."
+                        " Missing graph: {}".format(problems)
+                    )
+
+                # Try finding roots by finding the things that point using
+                # '-- / --'
+                punct_rel = '-- / --'
+                additional_roots = {
+                    tID
+                    for tID in something_left
+                    if punct_rel in map(lambda p: p[1], self.head2deps[tID])
+                }
+
+                # Verify we don't have too many
+                for r in additional_roots:
+                    # If some additional root dominates some other additional
+                    # root, this is a problem, as every connected graph can
+                    # have at most one root.
+                    dominated = self.get_constituent(r) & additional_roots
+                    dominated.remove(r)  # we know `r` must be in there
+                    if dominated:
+                        raise ValueError(
+                            "Found too many additional roots."
+                            " {} dominates {} in {}".format(
+                                r,
+                                dominated,
+                                problems
+                            )
+                        )
+
+                roots |= additional_roots
+
+                # Verify we have everything
+                if not ignore_non_trees:
+                    something_left = set(self.head2deps).difference(
+                        *map(self.get_constituent, roots)
+                    )
+                    if something_left:
+                        problems = {
+                            key: self.head2deps[key]
+                            for key in something_left
+                        }
+                        raise ValueError(
+                            "Circular reference detected after trying to fix."
+                            " Missing graph: {}".format(problems)
+                        )
+
+        return roots
 
     def get_direct_dependents(self, ID):
         """
@@ -81,7 +182,7 @@ class ConstituencyTree:
         """
         Get the term IDs of the terms dependent on `ID`.
 
-        Always contains `ID`, even if it is an unknown `ID`.
+        Always contains `ID`, even if it is unknown.
 
         :param headID:  term ID to get constituent of
         :return:        a set of IDs of terms that are dependents of `ID`
@@ -137,6 +238,28 @@ class ConstituencyTree:
         return head2deps
 
     @staticmethod
+    def filter_direct_self_reference(head2deps):
+        """
+        Filter out any dependents that are the same as their direct parent.
+
+        If this means a head does not have any remaining dependents, the head
+        is also removed.
+        """
+        incomplete = {
+            head: {
+                (dep, info)
+                for dep, info in deps
+                if dep != head
+            }
+            for head, deps in head2deps.items()
+        }
+        # We can't use `incomplete` for iteration, as its size will change
+        for head in head2deps:
+            if not incomplete[head]:
+                del incomplete[head]
+        return incomplete
+
+    @staticmethod
     def filter_headdep_dict(head2deps, term_filter):
         """
         Only keep terms where `term_filter(term)` evaluates True.
@@ -150,9 +273,9 @@ class ConstituencyTree:
 
             from  --child info-->  to
 
-        !! NB !! If a circular reference exists in the dependency tree, this
-                 will stay in, even if some of the terms in the circular
-                 reference are filtered out.
+        !! NB !! If a circular reference exists in one of the "trees", this
+                 will stay in, even if some (or all but one) of the terms in
+                 the circular reference are filtered out.
 
         :param head2deps:       {head: {(dep, function), ...}}
         :param term_filter:     filter for terms
